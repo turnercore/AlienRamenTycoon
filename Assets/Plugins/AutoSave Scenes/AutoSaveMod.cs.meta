@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: bfd0d7f2cf4973348b92ddbccaa9f5ae
+timeCreated: 1497373144
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 90091
+  packageName: AutoSave Scene
+  packageVersion: 3.2
+  assetPath: Assets/Plugins/AutoSave Scenes/AutoSaveMod.cs
+  uploadId: 477210

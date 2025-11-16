@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 82ef66a65f755b141b4436a836e6735e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 90091
+  packageName: AutoSave Scene
+  packageVersion: 3.2
+  assetPath: Assets/Plugins/AutoSave Scenes/AutoSaveSettings.asset
+  uploadId: 477210

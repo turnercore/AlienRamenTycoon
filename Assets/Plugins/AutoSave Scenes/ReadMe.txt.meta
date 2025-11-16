@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6b55079beec1e174fa726b154a93fc90
+timeCreated: 1493380610
+licenseType: Store
+TextScriptImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 90091
+  packageName: AutoSave Scene
+  packageVersion: 3.2
+  assetPath: Assets/Plugins/AutoSave Scenes/ReadMe.txt
+  uploadId: 477210

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 4783cf8a4bae8e146b9949b206c35da6
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 90091
+  packageName: AutoSave Scene
+  packageVersion: 3.2
+  assetPath: Assets/Plugins/AutoSave Scenes/EM.AutoSave.Editor.asmdef
+  uploadId: 477210

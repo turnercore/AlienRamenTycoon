@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1dc665fdc56549c4fbf951d1283662ab
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 90091
+  packageName: AutoSave Scene
+  packageVersion: 3.2
+  assetPath: Assets/Plugins/AutoSave Scenes/SnapModSettings.asset
+  uploadId: 477210
