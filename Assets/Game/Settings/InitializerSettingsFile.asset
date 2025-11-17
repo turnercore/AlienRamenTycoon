@@ -13,19 +13,25 @@ MonoBehaviour:
   m_Name: InitializerSettingsFile
   m_EditorClassIdentifier: Assembly-CSharp::Project.InitializerSettingsFile
   desktopPlatformSettings:
-    m_AssetGUID: 
+    m_AssetGUID: 0681e78c2b21ed744993bb51ebe2237a
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   webPlatformSettings:
-    m_AssetGUID: 
+    m_AssetGUID: b2f227fe6ae440b4f8989908c9b2553f
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   bootstrapAssetReference:
-    m_AssetGUID: 
+    m_AssetGUID: f10376ab3c4d1dc488d0a91d376fd258
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  nakamaServerSettings:
+    m_AssetGUID: f7fc97447ba925a47824f59e68209545
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 

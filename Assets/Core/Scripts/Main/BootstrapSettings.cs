@@ -4,8 +4,8 @@ using UnityEngine.AddressableAssets;
 namespace Project
 {
     [CreateAssetMenu(
-        menuName = "Project/Settings/General/DelayLoadSettingsFile",
-        fileName = "DelayLoadSettingsFile"
+        menuName = "Project/Settings/General/BootstrapSettings",
+        fileName = "BootstrapSettings"
     )]
     public class BootstrapSettings : ScriptableObject
     {

@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Settings
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Settings
+  m_GUID: 8c716c0cbb0385b418ba100718e49151
+  m_SerializeEntries:
+  - m_GUID: 0681e78c2b21ed744993bb51ebe2237a
+    m_Address: Assets/Game/Settings/DesktopPlatformSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 37345da44d5dd024286317cf9e757e9b
+    m_Address: Assets/Game/Settings/InitializerSettingsFile.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b2f227fe6ae440b4f8989908c9b2553f
+    m_Address: Assets/Game/Settings/WebPlatformSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f10376ab3c4d1dc488d0a91d376fd258
+    m_Address: Assets/Game/Settings/BootstrapSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f7fc97447ba925a47824f59e68209545
+    m_Address: Assets/Game/Settings/NakamaSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: ff02124a7adea3b4b8671d132dd6a42b, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 8303c3db197367a44a3df2ed813c8eea, type: 2}
+    - {fileID: 11400000, guid: 4f08aa38fb82acd42889e5d0d5855a5f, type: 2}

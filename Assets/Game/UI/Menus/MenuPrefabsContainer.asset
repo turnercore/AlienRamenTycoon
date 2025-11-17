@@ -9,8 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ed6a9b87d6f0fe944b6808d67fa2e4a6, type: 3}
-  m_Name: WebPlatformSettings
-  m_EditorClassIdentifier: Assembly-CSharp::Core.WebPlatformSettings
-  devicePlatform: 1
-  inputSettings: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: f5e1ad56af7580145ad5beff6f3383b1, type: 3}
+  m_Name: MenuPrefabsContainer
+  m_EditorClassIdentifier: Assembly-CSharp::MenuPrefabsContainer
+  mainMenuReference: {fileID: 0}

@@ -1,4 +1,5 @@
 using Core;
+using Server;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -13,5 +14,6 @@ namespace Project
         public AssetReferenceT<DesktopPlatformSettings> desktopPlatformSettings;
         public AssetReferenceT<WebPlatformSettings> webPlatformSettings;
         public AssetReferenceT<BootstrapSettings> bootstrapAssetReference;
+        public AssetReferenceT<NakamaSettings> nakamaServerSettings;
     }
 }

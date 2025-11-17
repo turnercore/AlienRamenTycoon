@@ -14,12 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Server
   m_GUID: 4ca4bee9eab7c0c458c32349c2a65dc2
-  m_SerializeEntries:
-  - m_GUID: f7fc97447ba925a47824f59e68209545
-    m_Address: Assets/Game/Settings/NakamaSettings.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: ff02124a7adea3b4b8671d132dd6a42b, type: 2}
   m_SchemaSet:
