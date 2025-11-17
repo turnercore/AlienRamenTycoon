@@ -2,12 +2,9 @@ using System;
 using System.Collections;
 using System.Linq;
 using Core;
-using NUnit.Framework.Interfaces;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace Server
 {
@@ -27,9 +24,11 @@ namespace Server
         private AsyncOperationHandle<NakamaSettings> settingsHandle;
         public string[] errorCodes;
 
-        //I am not sure how to locate this with labels or dynamically, something to look up,
-        // for now need to copy the string and paste here
+        // Default Server Settings if not set by bootstrapper
         private readonly string _settingsAddress = "Assets/Game/Settings/NakamaSettings.asset";
+
+        // A way for something like the entrypoint to override the server settings for main build
+        public AssetReferenceT<NakamaSettings> SettingsAddress;
 
         public void Dispose()
         {
@@ -37,6 +36,7 @@ namespace Server
             CloseConnection();
             // Release server data
             settingsHandle.Release();
+            // Clear error codes here
         }
 
         private void CloseConnection()
@@ -46,15 +46,24 @@ namespace Server
 
         public IEnumerator Initialize()
         {
-            // Load settings data addressable, if not found error
-            AsyncOperationHandle<NakamaSettings> handle =
-                Addressables.LoadAssetAsync<NakamaSettings>(_settingsAddress);
-            settingsHandle = handle;
-            yield return new WaitUntil(() => handle.IsDone);
-            settings = handle.Result;
+            // Add error handling here
+            if (SettingsAddress == null)
+            {
+                // Load settings data addressable with default address, if not found
+                AsyncOperationHandle<NakamaSettings> handle =
+                    Addressables.LoadAssetAsync<NakamaSettings>(_settingsAddress);
+                settingsHandle = handle;
+            }
+            else
+            {
+                AsyncOperationHandle<NakamaSettings> handle =
+                    Addressables.LoadAssetAsync<NakamaSettings>(SettingsAddress);
+                settingsHandle = handle;
+            }
+            yield return new WaitUntil(() => settingsHandle.IsDone);
+            settings = settingsHandle.Result;
 
             TryToConnect();
-            // Clear error codes
         }
 
         public async void TryToConnect()
