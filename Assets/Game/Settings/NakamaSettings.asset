@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f036d282d45b66d4e9fa73e3d8cde2bf, type: 3}
   m_Name: NakamaSettings
   m_EditorClassIdentifier: Assembly-CSharp::Server.NakamaSettings
-  ServerAddress: 
+  ServerAddress: 100.77.25.97:7373
