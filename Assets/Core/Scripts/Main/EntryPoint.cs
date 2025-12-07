@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Project;
+using Server;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -14,10 +15,6 @@ namespace Core
     public class EntryPoint : MonoBehaviour
     {
         // Authoring
-        // Instead of using hard references to resources, we load files using AssetReference or AssetReferenceT which point to addresses of actual assets
-        // from Addressables groups bundles, in order to have a better control over memory load. Each request will return a handle
-        // which is contained in the AssetRequest. Releasing this handle will unload the resource and free the associated references,
-        // if they are not used anymore.
         public AssetReferenceT<InitializerSettingsFile> initializerSettingsFile;
 
         // Globals
@@ -26,12 +23,15 @@ namespace Core
         private Dictionary<ApplicationState, IApplicationState> applicationStates;
         private ProfilerMarker createApplicationStateMarker = new("createApplicationState");
 
-        //Settings
+        // Settings
         private InitializerSettingsFile initializerSettings;
         private SplashBootSettings splashBootSettings;
         private MainMenuBootSettings mainMenuBootSettings;
         private GameModeBootSettings gameModeBootSettings;
         private MenuApplicationStateData menuApplicationStateData;
+
+        // Network
+        private INetworkService networkService;
 
         /// <summary>
         /// The is the first method called when the game starts. It will load the Initializer prefab which will initialize the project
@@ -48,7 +48,7 @@ namespace Core
             var entryPoint = FindFirstObjectByType<EntryPoint>(FindObjectsInactive.Include);
             if (entryPoint == null)
             {
-                var handler = Addressables.InstantiateAsync("Initializer");
+                Addressables.InstantiateAsync("Initializer");
             }
         }
 
@@ -72,7 +72,7 @@ namespace Core
                 yield return null;
             }
 
-            // Initialize platform
+            // Initialize platform selector
             applicationData = new ApplicationData
             {
                 platformSelector = new PlatformSelector(
@@ -88,15 +88,97 @@ namespace Core
             yield return new WaitUntil(() => initSettingsHandle.IsDone);
             initializerSettings = initSettingsHandle.Result;
 
+            Debug.Log("InitializerSettingsFile loaded");
+
+            if (initializerSettings == null)
+            {
+                Debug.LogError(
+                    "InitializerSettingsFile is null! Check if initializerSettingsFile reference is set in EntryPoint inspector."
+                );
+                yield break;
+            }
+
+            // --- NETWORK: load settings and create connection -----------------
+            // Load network settings and create service
+            Debug.Log("Loading network settings...");
+            var networkSettingsHandle = Addressables.LoadAssetAsync<NetworkSettings>(
+                initializerSettings.networkSettings
+            );
+            yield return new WaitUntil(() => networkSettingsHandle.IsDone);
+            Debug.Log("Network settings loaded");
+
+            if (networkSettingsHandle.Result == null)
+            {
+                Debug.LogError("NetworkSettings asset is null!");
+            }
+
+            networkService = NetworkServiceFactory.Create(networkSettingsHandle.Result);
+            Debug.Log($"NetworkService created: {(networkService != null ? "not null" : "null")}");
+
+            if (networkService != null)
+            {
+                Debug.Log("Initializing network service...");
+                // Initialize the service (which initializes its connection)
+                yield return networkService.Initialize();
+                Debug.Log("Network service initialized");
+
+                Debug.Log($"Network status: {networkService.Status}");
+                int connectionTimeout = 0;
+                while (
+                    networkService.Status == NetworkConnectionStatus.Connecting
+                    && connectionTimeout < 300
+                )
+                {
+                    yield return null;
+                    connectionTimeout++;
+                }
+
+                Debug.Log(
+                    $"Exited connection loop. Status: {networkService.Status}, Timeout: {connectionTimeout >= 300}"
+                );
+
+                if (networkService.Status == NetworkConnectionStatus.Connected)
+                {
+                    Debug.Log("Network: connected successfully during boot.");
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"Network: failed to connect during boot. Status: {networkService.Status}"
+                    );
+                }
+
+                // Expose to the rest of the app
+                applicationData.Network = networkService;
+            }
+            else
+            {
+                Debug.Log("No network service created (null)");
+            }
+            // ------------------------------------------------------------------
+
             // We make sure the platform is initialized before entering the game states
             yield return CreatePlatformFactory();
 
-            // Booting into the default starting Application State
+            // Load all boot settings
             var splashBootSettingsHandle = Addressables.LoadAssetAsync<SplashBootSettings>(
-                initializerSettings.bootAssetReference
+                initializerSettings.splashBootSettings
             );
-            yield return new WaitUntil(() => splashBootSettingsHandle.IsDone);
+            var mainMenuBootSettingsHandle = Addressables.LoadAssetAsync<MainMenuBootSettings>(
+                initializerSettings.mainMenuBootSettings
+            );
+            var gameModeBootSettingsHandle = Addressables.LoadAssetAsync<GameModeBootSettings>(
+                initializerSettings.gameModeBootSettings
+            );
+
+            yield return new WaitUntil(() =>
+                splashBootSettingsHandle.IsDone
+                && mainMenuBootSettingsHandle.IsDone
+                && gameModeBootSettingsHandle.IsDone
+            );
             splashBootSettings = splashBootSettingsHandle.Result;
+            mainMenuBootSettings = mainMenuBootSettingsHandle.Result;
+            gameModeBootSettings = gameModeBootSettingsHandle.Result;
 
             // We initialize the Application State Runner which will run the game states
             menuApplicationStateData = new MenuApplicationStateData();
@@ -149,13 +231,17 @@ namespace Core
                     menuApplicationStateData,
                     mainMenuBootSettings
                 ),
-                // The GameMode state is where we will be playing the game or the games. It is where we can have multiple game modes
                 [ApplicationState.GameMode] = new GameModeApplicationState(
                     applicationData,
                     gameModeBootSettings.gameModeSettings
                 ),
             };
             createApplicationStateMarker.End();
+        }
+
+        private void OnDestroy()
+        {
+            networkService?.Dispose();
         }
     }
 }

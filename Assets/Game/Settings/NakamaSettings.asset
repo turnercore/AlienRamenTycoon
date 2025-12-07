@@ -12,4 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f036d282d45b66d4e9fa73e3d8cde2bf, type: 3}
   m_Name: NakamaSettings
   m_EditorClassIdentifier: Assembly-CSharp::Server.NakamaSettings
-  ServerAddress: 100.77.25.97:7373
+  Scheme: https
+  Host: nakama-api.turnercore.dev
+  Port: 443
+  ServerKey: ' d2f6be4e8e727146f14d520d792cc0470d28775cf879801d6a464ac11a5f0009'
+  TimeoutSeconds: 10
+  SocketConnectTimeoutSeconds: 15
+  UseMainThreadSocket: 0

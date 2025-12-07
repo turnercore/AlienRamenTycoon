@@ -27,16 +27,58 @@ namespace Project
 
         public void EnterApplicationState()
         {
-            if (gdprReferencePrefab == null)
+            Debug.Log("SplashApplicationState.EnterApplicationState() called");
+
+            if (bootInitializer == null)
             {
-                gdprReferencePrefab = Addressables
-                    .LoadAssetAsync<GdprUIReference>(bootInitializer.menuReference)
-                    .WaitForCompletion();
+                Debug.LogError("bootInitializer is null!");
+                return;
             }
 
-            GdprUIReference gdprReference = GameObject.Instantiate<GdprUIReference>(
-                gdprReferencePrefab
+            if (bootInitializer.menuPrefabsContainer == null)
+            {
+                Debug.LogError(
+                    "menuPrefabsContainer is null! Did you assign it in SplashBootSettings?"
+                );
+                return;
+            }
+
+            Debug.Log(
+                $"Loading GDPR UI Reference from: {bootInitializer.menuPrefabsContainer.gdprUIReference}"
             );
+
+            if (gdprReferencePrefab == null)
+            {
+                var prefab = Addressables
+                    .LoadAssetAsync<GameObject>(
+                        bootInitializer.menuPrefabsContainer.gdprUIReference
+                    )
+                    .WaitForCompletion();
+
+                if (prefab == null)
+                {
+                    Debug.LogError("Failed to load GDPR prefab!");
+                    return;
+                }
+
+                Debug.Log($"Loaded prefab: {prefab.name}");
+                gdprReferencePrefab = GameObject
+                    .Instantiate(prefab)
+                    .GetComponent<GdprUIReference>();
+
+                if (gdprReferencePrefab == null)
+                {
+                    Debug.LogError("Prefab does not have GdprUIReference component!");
+                    return;
+                }
+            }
+
+            GdprUIReference gdprReference = GameObject
+                .Instantiate(gdprReferencePrefab.gameObject)
+                .GetComponent<GdprUIReference>();
+
+            Debug.Log($"Instantiated GDPR UI: {gdprReference.gameObject.name}");
+
             gdprReference.continueButton.onClick.AddListener(() =>
             {
                 applicationData.ChangeApplicationState(ApplicationState.MainMenu);
@@ -51,7 +93,11 @@ namespace Project
 
         public void LateTick() { }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            // Clean up addressable resources if needed
+            Addressables.Release(gdprReferencePrefab);
+        }
 
         public void ExitApplicationState() { }
 

@@ -24,14 +24,26 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  bootstrapAssetReference:
-    m_AssetGUID: f10376ab3c4d1dc488d0a91d376fd258
+  splashBootSettings:
+    m_AssetGUID: 9663ca4e1c879ce48bb07d642d4937d7
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  nakamaServerSettings:
-    m_AssetGUID: f7fc97447ba925a47824f59e68209545
+  mainMenuBootSettings:
+    m_AssetGUID: efd973f9196be0e4a8b57283c355d0e3
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  gameModeBootSettings:
+    m_AssetGUID: bb3edac288a1d2149a07983dd129a78f
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  networkSettings:
+    m_AssetGUID: ee37541e2354f7e42b2897910fbec553
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 

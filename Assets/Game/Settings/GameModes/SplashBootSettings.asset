@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3494c3f349cc3a44b3bf29227861a98, type: 3}
+  m_Name: SplashBootSettings
+  m_EditorClassIdentifier: Assembly-CSharp::Project.SplashBootSettings
+  menuPrefabsContainer: {fileID: 11400000, guid: 411ca5ac3622f644e9de81c7e3404c6c, type: 2}
+  gameModeSettings: {fileID: 11400000, guid: 77b115bd19d5fb9419153b3b97bfcb62, type: 2}

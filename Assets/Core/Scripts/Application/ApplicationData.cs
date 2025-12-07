@@ -1,3 +1,4 @@
+using Server;
 using UnityEngine;
 
 namespace Core
@@ -8,6 +9,10 @@ namespace Core
     public class ApplicationData
     {
         public PlatformSelector platformSelector;
+
+        // Global network service for all game states
+        public INetworkService Network { get; set; }
+
         public ApplicationState ActiveApplicationState { get; private set; }
         public GameMode ActiveGameMode { get; private set; }
 

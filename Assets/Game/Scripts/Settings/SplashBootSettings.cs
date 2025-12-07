@@ -7,5 +7,5 @@ namespace Project
         menuName = "Project/Settings/BootSettings/SplashBootSettings",
         fileName = "SplashBootSettings"
     )]
-    public class SplashBootSettings : BootSettings<GdprUIReference> { }
+    public class SplashBootSettings : BootSettings { }
 }

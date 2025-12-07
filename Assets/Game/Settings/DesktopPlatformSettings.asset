@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: DesktopPlatformSettings
   m_EditorClassIdentifier: Assembly-CSharp::Core.DesktopPlatformSettings
   devicePlatform: 0
-  inputSettings: {fileID: 0}
+  inputSettings: {fileID: 11400000, guid: af576bd2a0f232c47986e1069e65a865, type: 2}

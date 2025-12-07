@@ -7,5 +7,5 @@ namespace Project
         menuName = "Project/Settings/BootSettings/MainMenuBootSettings",
         fileName = "MainMenuBootSettings"
     )]
-    public class MainMenuBootSettings : BootSettings<MainMenuReference> { }
+    public class MainMenuBootSettings : BootSettings { }
 }

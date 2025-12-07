@@ -1,9 +1,9 @@
-using Core;
+using Project;
 using Server;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace Project
+namespace Core
 {
     [CreateAssetMenu(
         menuName = "Project/Settings/General/InitializerSettingsFile",
@@ -13,7 +13,9 @@ namespace Project
     {
         public AssetReferenceT<DesktopPlatformSettings> desktopPlatformSettings;
         public AssetReferenceT<WebPlatformSettings> webPlatformSettings;
-        public AssetReferenceT<BootSettings<MenuReference>> bootAssetReference;
-        public AssetReferenceT<NakamaSettings> nakamaServerSettings;
+        public AssetReferenceT<SplashBootSettings> splashBootSettings;
+        public AssetReferenceT<MainMenuBootSettings> mainMenuBootSettings;
+        public AssetReferenceT<GameModeBootSettings> gameModeBootSettings;
+        public AssetReferenceT<NetworkSettings> networkSettings;
     }
 }

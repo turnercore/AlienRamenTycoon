@@ -1,5 +1,6 @@
 using System;
 using Core;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceProviders;
@@ -20,30 +21,34 @@ namespace Project
     {
         private readonly ApplicationData applicationData;
         private readonly MenuApplicationStateData menuApplicationStateData;
-        private readonly MainMenuBootSettings bootSettings;
+        private readonly MainMenuBootSettings mainMenuBootSettings;
         private MainMenuView mainMenuView;
+        private MainMenuReference mainMenuReference;
         private AsyncOperationHandle<SceneInstance> loadSceneAsync;
         public bool IsApplicationStateInitialized { get; set; } = true;
 
         public MainMenuApplicationState(
             ApplicationData applicationData,
             MenuApplicationStateData menuApplicationStateData,
-            MainMenuBootSettings bootSettings
+            MainMenuBootSettings mainMenuBootSettings
         )
         {
             this.applicationData = applicationData;
             this.menuApplicationStateData = menuApplicationStateData;
-            this.bootSettings = bootSettings;
+            this.mainMenuBootSettings = mainMenuBootSettings;
         }
 
         public void EnterApplicationState()
         {
             Addressables
-                .LoadSceneAsync(bootSettings.menuReference, LoadSceneMode.Single)
+                .LoadAssetAsync<MainMenuReference>(
+                    mainMenuBootSettings.menuPrefabsContainer.mainMenuReference
+                )
                 .Completed += handle =>
             {
-                OnSceneLoaded();
+                OnMenuLoaded(handle);
             };
+
             menuApplicationStateData.startGameRequests += mode =>
             {
                 applicationData.ChangeApplicationState(ApplicationState.GameMode);
@@ -51,16 +56,11 @@ namespace Project
             };
         }
 
-        private void OnSceneLoaded()
+        private void OnMenuLoaded(AsyncOperationHandle<MainMenuReference> handle)
         {
-            Addressables.LoadAssetAsync<MainMenuReference>(bootSettings.menuReference).Completed +=
-                OnContainerLoaded;
-        }
-
-        private void OnContainerLoaded(AsyncOperationHandle<MainMenuReference> handle)
-        {
-            mainMenuView = new MainMenuView(handle.Result, menuApplicationStateData);
-            mainMenuView.Initialize();
+            mainMenuReference = GameObject
+                .Instantiate<MainMenuReference>(handle.Result)
+                .GetComponent<MainMenuReference>();
         }
 
         public ApplicationState Tick()
@@ -71,7 +71,17 @@ namespace Project
 
         public void LateTick() { }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            mainMenuView?.Dispose();
+            if (mainMenuReference != null)
+            {
+                GameObject.Destroy(mainMenuReference.gameObject);
+            }
+
+            Addressables.Release(mainMenuReference);
+            //Addressables.Release(mainMenuView);
+        }
 
         public void ExitApplicationState() { }
     }

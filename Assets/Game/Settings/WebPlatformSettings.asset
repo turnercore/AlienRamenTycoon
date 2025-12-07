@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: WebPlatformSettings
   m_EditorClassIdentifier: Assembly-CSharp::Core.WebPlatformSettings
   devicePlatform: 1
-  inputSettings: {fileID: 0}
+  inputSettings: {fileID: 11400000, guid: d887cbd7fa87d3c438799e293b9d4238, type: 2}

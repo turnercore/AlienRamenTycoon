@@ -3,10 +3,9 @@ using UnityEngine.AddressableAssets;
 
 namespace Core
 {
-    public abstract class BootSettings<TMenu> : ScriptableObject
-        where TMenu : MenuReference
+    public abstract class BootSettings : ScriptableObject
     {
-        public AssetReferenceT<TMenu> menuReference;
+        public MenuPrefabsContainer menuPrefabsContainer;
         public GameModeSettings gameModeSettings;
     }
 }

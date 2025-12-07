@@ -27,14 +27,39 @@ MonoBehaviour:
     m_SerializedLabels:
     - default
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9663ca4e1c879ce48bb07d642d4937d7
+    m_Address: Assets/Game/Settings/SplashBootSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: af576bd2a0f232c47986e1069e65a865
+    m_Address: Assets/Game/Settings/DesktopInputSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b2f227fe6ae440b4f8989908c9b2553f
     m_Address: Assets/Game/Settings/WebPlatformSettings.asset
     m_ReadOnly: 0
     m_SerializedLabels:
     - default
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f10376ab3c4d1dc488d0a91d376fd258
-    m_Address: Assets/Game/Settings/BootstrapSettings.asset
+  - m_GUID: bb3edac288a1d2149a07983dd129a78f
+    m_Address: Assets/Game/Settings/GameModeBootSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d887cbd7fa87d3c438799e293b9d4238
+    m_Address: Assets/Game/Settings/WebInputSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ee37541e2354f7e42b2897910fbec553
+    m_Address: Assets/Game/Settings/NetworkSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: efd973f9196be0e4a8b57283c355d0e3
+    m_Address: Assets/Game/Settings/MainMenuBootSettings.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

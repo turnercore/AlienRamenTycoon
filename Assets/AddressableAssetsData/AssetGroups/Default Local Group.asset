@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Default Local Group
   m_GUID: 4b217a0c4ebe7bf419538a0f44edc123
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 411ca5ac3622f644e9de81c7e3404c6c
+    m_Address: Assets/Game/Settings/PrefabContainers/MenuPrefabsContainer.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: ff02124a7adea3b4b8671d132dd6a42b, type: 2}
   m_SchemaSet:

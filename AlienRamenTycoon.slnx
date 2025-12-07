@@ -1,6 +1,6 @@
 ﻿<Solution>
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="TableForge.Editor.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="NakamaEditor.csproj" />
   <Project Path="FMODUnityResonanceEditor.csproj" />
   <Project Path="TableForge.Runtime.csproj" />

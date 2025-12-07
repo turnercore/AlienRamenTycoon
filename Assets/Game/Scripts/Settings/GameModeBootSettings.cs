@@ -7,5 +7,5 @@ namespace Project
         menuName = "Project/Settings/BootSettings/GameModeBootSettings",
         fileName = "GameModeBootSettings"
     )]
-    public class GameModeBootSettings : BootSettings<GameModeUIReference> { }
+    public class GameModeBootSettings : BootSettings { }
 }
