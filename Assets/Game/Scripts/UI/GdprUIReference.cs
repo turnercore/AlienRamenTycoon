@@ -1,8 +1,11 @@
+using Core;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Project {
-    public class GdprUIReference : MonoBehaviour {
+namespace Project
+{
+    public class GdprUIReference : MenuReference
+    {
         public Button continueButton;
     }
 }

@@ -24,7 +24,7 @@ namespace Server
         private AsyncOperationHandle<NakamaSettings> settingsHandle;
         public string[] errorCodes;
 
-        // Default Server Settings if not set by bootstrapper
+        // Default Server Settings if not set by bootper
         private readonly string _settingsAddress = "Assets/Game/Settings/NakamaSettings.asset";
 
         // A way for something like the entrypoint to override the server settings for main build

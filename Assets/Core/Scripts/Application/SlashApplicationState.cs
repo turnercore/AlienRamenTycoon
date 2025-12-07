@@ -1,5 +1,6 @@
 using Core;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Project
 {
@@ -10,23 +11,31 @@ namespace Project
     /// </summary>
     public class SplashApplicationState : IApplicationState
     {
-        private readonly BootstrapSettings bootStrapInitializer;
+        private readonly SplashBootSettings bootInitializer;
         private readonly ApplicationData applicationData;
         public bool IsApplicationStateInitialized { get; set; } = true;
+        private GdprUIReference gdprReferencePrefab;
 
         public SplashApplicationState(
-            BootstrapSettings bootStrapInitializer,
+            SplashBootSettings bootInitializer,
             ApplicationData applicationData
         )
         {
-            this.bootStrapInitializer = bootStrapInitializer;
+            this.bootInitializer = bootInitializer;
             this.applicationData = applicationData;
         }
 
         public void EnterApplicationState()
         {
-            GdprUIReference gdprReference = GameObject.Instantiate(
-                bootStrapInitializer.gdprUIReference
+            if (gdprReferencePrefab == null)
+            {
+                gdprReferencePrefab = Addressables
+                    .LoadAssetAsync<GdprUIReference>(bootInitializer.menuReference)
+                    .WaitForCompletion();
+            }
+
+            GdprUIReference gdprReference = GameObject.Instantiate<GdprUIReference>(
+                gdprReferencePrefab
             );
             gdprReference.continueButton.onClick.AddListener(() =>
             {

@@ -13,7 +13,7 @@ namespace Project
     {
         public AssetReferenceT<DesktopPlatformSettings> desktopPlatformSettings;
         public AssetReferenceT<WebPlatformSettings> webPlatformSettings;
-        public AssetReferenceT<BootstrapSettings> bootstrapAssetReference;
+        public AssetReferenceT<BootSettings<MenuReference>> bootAssetReference;
         public AssetReferenceT<NakamaSettings> nakamaServerSettings;
     }
 }

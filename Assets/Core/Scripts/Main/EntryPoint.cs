@@ -1,12 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
-using Core;
+using Project;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-namespace Project
+namespace Core
 {
     /// <summary>
     /// The main boot class which is initializing the project, loads the platforms settings, initializes the platforms and creates the game states
@@ -30,7 +30,9 @@ namespace Project
 
         //Settings
         private InitializerSettingsFile initializerSettings;
-        private BootstrapSettings bootstrapSettings;
+        private SplashBootSettings splashBootSettings;
+        private MainMenuBootSettings mainMenuBootSettings;
+        private GameModeBootSettings gameModeBootSettings;
         private MenuApplicationStateData menuApplicationStateData;
 
         /// <summary>
@@ -91,12 +93,12 @@ namespace Project
             // We make sure the platform is initialized before entering the game states
             yield return CreatePlatformFactory();
 
-            // Bootstrapping into the default starting Application State
-            var bootStrapsSettingsHandle = Addressables.LoadAssetAsync<BootstrapSettings>(
-                initializerSettings.bootstrapAssetReference
+            // Booting into the default starting Application State
+            var splashBootSettingsHandle = Addressables.LoadAssetAsync<SplashBootSettings>(
+                initializerSettings.bootAssetReference
             );
-            yield return new WaitUntil(() => bootStrapsSettingsHandle.IsDone);
-            bootstrapSettings = bootStrapsSettingsHandle.Result;
+            yield return new WaitUntil(() => splashBootSettingsHandle.IsDone);
+            splashBootSettings = splashBootSettingsHandle.Result;
 
             // We initialize the Application State Runner which will run the game states
             menuApplicationStateData = new MenuApplicationStateData();
@@ -141,19 +143,18 @@ namespace Project
             applicationStates = new Dictionary<ApplicationState, IApplicationState>
             {
                 [ApplicationState.Splash] = new SplashApplicationState(
-                    bootstrapSettings,
+                    splashBootSettings,
                     applicationData
                 ),
                 [ApplicationState.MainMenu] = new MainMenuApplicationState(
                     applicationData,
                     menuApplicationStateData,
-                    bootstrapSettings
+                    mainMenuBootSettings
                 ),
-
                 // The GameMode state is where we will be playing the game or the games. It is where we can have multiple game modes
                 [ApplicationState.GameMode] = new GameModeApplicationState(
                     applicationData,
-                    bootstrapSettings.gameModeSettings
+                    gameModeBootSettings
                 ),
             };
             createApplicationStateMarker.End();

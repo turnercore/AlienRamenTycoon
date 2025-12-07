@@ -9,16 +9,15 @@ namespace Project
     /// </summary>
     public class MainMenuView : IApplicationLifecycle
     {
-        private readonly MenuPrefabsContainer menuPrefabsContainer;
         private readonly MenuApplicationStateData menuApplicationStateData;
         private MainMenuReference mainMenuReference;
 
         public MainMenuView(
-            MenuPrefabsContainer menuPrefabsContainer,
+            MainMenuReference mainMenuReference, // Use the specific type
             MenuApplicationStateData menuApplicationStateData
         )
         {
-            this.menuPrefabsContainer = menuPrefabsContainer;
+            this.mainMenuReference = mainMenuReference;
             this.menuApplicationStateData = menuApplicationStateData;
         }
 
@@ -26,7 +25,7 @@ namespace Project
         {
             if (mainMenuReference == null)
             {
-                mainMenuReference = GameObject.Instantiate(menuPrefabsContainer.mainMenuReference);
+                mainMenuReference = GameObject.Instantiate(mainMenuReference);
             }
             mainMenuReference.exitButton.onClick.AddListener(Application.Quit);
             mainMenuReference.optionsButton.onClick.AddListener(() =>

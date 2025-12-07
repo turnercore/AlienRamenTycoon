@@ -20,7 +20,7 @@ namespace Project
     {
         private readonly ApplicationData applicationData;
         private readonly MenuApplicationStateData menuApplicationStateData;
-        private readonly BootstrapSettings bootstrapSettings;
+        private readonly MainMenuBootSettings bootSettings;
         private MainMenuView mainMenuView;
         private AsyncOperationHandle<SceneInstance> loadSceneAsync;
         public bool IsApplicationStateInitialized { get; set; } = true;
@@ -28,18 +28,18 @@ namespace Project
         public MainMenuApplicationState(
             ApplicationData applicationData,
             MenuApplicationStateData menuApplicationStateData,
-            BootstrapSettings bootstrapSettings
+            MainMenuBootSettings bootSettings
         )
         {
             this.applicationData = applicationData;
             this.menuApplicationStateData = menuApplicationStateData;
-            this.bootstrapSettings = bootstrapSettings;
+            this.bootSettings = bootSettings;
         }
 
         public void EnterApplicationState()
         {
             Addressables
-                .LoadSceneAsync(bootstrapSettings.menuScene, LoadSceneMode.Single)
+                .LoadSceneAsync(bootSettings.menuReference, LoadSceneMode.Single)
                 .Completed += handle =>
             {
                 OnSceneLoaded();
@@ -53,12 +53,11 @@ namespace Project
 
         private void OnSceneLoaded()
         {
-            Addressables
-                .LoadAssetAsync<MenuPrefabsContainer>(bootstrapSettings.menuPrefabsContainer)
-                .Completed += OnContainerLoaded;
+            Addressables.LoadAssetAsync<MainMenuReference>(bootSettings.menuReference).Completed +=
+                OnContainerLoaded;
         }
 
-        private void OnContainerLoaded(AsyncOperationHandle<MenuPrefabsContainer> handle)
+        private void OnContainerLoaded(AsyncOperationHandle<MainMenuReference> handle)
         {
             mainMenuView = new MainMenuView(handle.Result, menuApplicationStateData);
             mainMenuView.Initialize();
