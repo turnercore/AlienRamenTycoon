@@ -24,9 +24,7 @@ namespace Core
         private IPlatform platform;
         private ApplicationData applicationData;
         private Dictionary<ApplicationState, IApplicationState> applicationStates;
-        private ProfilerMarker createApplicationStateMarker = new ProfilerMarker(
-            "createApplicationState"
-        );
+        private ProfilerMarker createApplicationStateMarker = new("createApplicationState");
 
         //Settings
         private InitializerSettingsFile initializerSettings;
@@ -154,7 +152,7 @@ namespace Core
                 // The GameMode state is where we will be playing the game or the games. It is where we can have multiple game modes
                 [ApplicationState.GameMode] = new GameModeApplicationState(
                     applicationData,
-                    gameModeBootSettings
+                    gameModeBootSettings.gameModeSettings
                 ),
             };
             createApplicationStateMarker.End();
