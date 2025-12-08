@@ -1,4 +1,5 @@
 using Core;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,7 +19,7 @@ namespace Project
         public Toggle offlineModeToggle;
 
         // fullscreen/windowed/borderless dropdown
-        public Dropdown displayModeDropdown;
+        public TMP_Dropdown displayModeDropdown;
 
         public Button backButton;
     }
