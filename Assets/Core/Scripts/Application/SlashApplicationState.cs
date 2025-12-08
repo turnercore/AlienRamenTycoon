@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Core;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -58,7 +57,7 @@ namespace Project
             return true;
         }
 
-        private async void LoadMenuFromAddressables()
+        private void LoadMenuFromAddressables()
         {
             if (gdprReferencePrefab == null)
             {
@@ -87,6 +86,11 @@ namespace Project
                         Debug.LogError("Failed to load GDPR UI prefab from Addressables.");
                     }
                 };
+            }
+            else
+            {
+                // Prefab already loaded, just create the menu
+                CreateMenu();
             }
         }
 
