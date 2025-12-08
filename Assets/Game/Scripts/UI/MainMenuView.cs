@@ -30,19 +30,26 @@ namespace Project
             {
                 mainMenuReference = GameObject.Instantiate(mainMenuReference);
             }
+
             mainMenuReference.exitButton.onClick.AddListener(OnQuitClicked);
-            mainMenuReference.optionsButton.onClick.AddListener(() =>
-                throw new NotImplementedException()
-            );
-            mainMenuReference.playButton.onClick.AddListener(() =>
-                menuApplicationStateData.startGameRequests.Invoke(GameMode.Spaceship)
-            );
+            mainMenuReference.optionsButton.onClick.AddListener(OnOptionsClicked);
+            mainMenuReference.playButton.onClick.AddListener(OnStartClicked);
         }
 
         private void OnQuitClicked()
         {
             // Change to a Quit Application State
             applicationData.ChangeApplicationState(ApplicationState.Exit);
+        }
+
+        private void OnStartClicked()
+        {
+            Debug.Log("Start button clicked - starting game...");
+        }
+
+        private void OnOptionsClicked()
+        {
+            Debug.Log("Options button clicked - opening options menu...");
         }
 
         public void Tick() { }
