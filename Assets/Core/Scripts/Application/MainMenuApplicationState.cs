@@ -74,6 +74,9 @@ namespace Project
             mainMenuView = new MainMenuView(
                 mainMenuReference,
                 menuApplicationStateData,
+                optionsMenuPrefabReference: mainMenuBootSettings
+                    .menuPrefabsContainer
+                    .optionsMenuReference,
                 applicationData
             );
             mainMenuView.Initialize();
