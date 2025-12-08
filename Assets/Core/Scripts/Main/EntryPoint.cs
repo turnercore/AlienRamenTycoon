@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Project;
@@ -23,6 +24,7 @@ namespace Core
         private ApplicationData applicationData;
         private Dictionary<ApplicationState, IApplicationState> applicationStates;
         private ProfilerMarker createApplicationStateMarker = new("createApplicationState");
+        private NetworkSettings networkSettings;
 
         // Settings
         private InitializerSettingsFile initializerSettings;
@@ -32,6 +34,7 @@ namespace Core
         private MenuApplicationStateData menuApplicationStateData;
 
         private readonly OptionsData optionsData = new();
+        private Action<bool> offlineHandler;
 
         // Network
         private INetworkService networkService;
@@ -72,7 +75,7 @@ namespace Core
                 Debug.LogWarning(
                     "The scene has no SceneReference script. Will start by default in Splash Application State"
                 );
-                GameObject sceneRef = new GameObject { name = "Scene Reference" };
+                GameObject sceneRef = new() { name = "Scene Reference" };
                 activeSceneReference = sceneRef.AddComponent<SceneReference>();
                 activeSceneReference.applicationState = ApplicationState.Splash;
                 yield return null;
@@ -140,21 +143,61 @@ namespace Core
         {
             // --- NETWORK: load settings and create connection -----------------
             // Load network settings and create service
-            Debug.Log("Loading network settings...");
-            var networkSettingsHandle = Addressables.LoadAssetAsync<NetworkSettings>(
-                initializerSettings.networkSettings
-            );
-            yield return new WaitUntil(() => networkSettingsHandle.IsDone);
-            Debug.Log("Network settings loaded");
-
-            if (networkSettingsHandle.Result == null)
+            if (networkSettings == null)
             {
-                Debug.LogError("NetworkSettings asset is null!");
+                var networkSettingsHandle = Addressables.LoadAssetAsync<NetworkSettings>(
+                    initializerSettings.networkSettings
+                );
+                yield return new WaitUntil(() => networkSettingsHandle.IsDone);
+
+                if (networkSettingsHandle.Result == null)
+                {
+                    Debug.LogError("NetworkSettings asset is null!");
+                }
+
+                // Save reference for later use
+                networkSettings = networkSettingsHandle.Result;
+
+                // Release Addressables handle
+                Addressables.Release(networkSettingsHandle);
             }
 
-            networkService = NetworkServiceFactory.Create(networkSettingsHandle.Result);
-            Debug.Log($"NetworkService created: {(networkService != null ? "not null" : "null")}");
+            //if we are in "offline mode, then we just load the offline service instead of what is in the settings file.
+            if (optionsData.OfflineMode)
+            {
+                Debug.Log("Offline mode is enabled - using OfflineNetworkService");
+                networkService = new OfflineNetworkService();
+            }
+            else
+            {
+                networkService = NetworkServiceFactory.Create(networkSettings);
+            }
 
+            // Subscribe to offline mode change in network options
+            offlineHandler = async isOffline =>
+            {
+                if (isOffline)
+                {
+                    Debug.Log("Switching to OfflineNetworkService due to offline mode enabled");
+                    networkService?.Dispose();
+                    networkService = new OfflineNetworkService();
+                }
+                else
+                {
+                    Debug.Log("Re-initializing network service due to offline mode disabled");
+                    networkService?.Dispose();
+                    networkService = NetworkServiceFactory.Create(networkSettings);
+                    StartCoroutine(InitializeNetworkService(networkService));
+                }
+            };
+            optionsData.OfflineModeChanged += offlineHandler;
+
+            Debug.Log($"NetworkService created: {(networkService != null ? "not null" : "null")}");
+            StartCoroutine(InitializeNetworkService(networkService));
+        }
+
+        private IEnumerator InitializeNetworkService(INetworkService networkService)
+        {
             if (networkService != null)
             {
                 Debug.Log("Initializing network service...");
@@ -195,7 +238,6 @@ namespace Core
             {
                 Debug.Log("No network service created (null)");
             }
-            // ------------------------------------------------------------------
         }
 
         /// <summary>
@@ -253,7 +295,11 @@ namespace Core
 
         private void OnDestroy()
         {
+            //Unsubscribe to options change
+            optionsData.OfflineModeChanged -= offlineHandler;
             networkService?.Dispose();
+            optionsData?.Dispose();
+            platform?.Dispose();
         }
 
         private void EnsureEventSystem()
