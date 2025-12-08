@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 4b217a0c4ebe7bf419538a0f44edc123
   m_SerializeEntries:
+  - m_GUID: 1dc3f7ba5aaf0cb4b8a7e338ba4d639f
+    m_Address: Assets/Game/Settings/Input/InputActions.inputactions
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 411ca5ac3622f644e9de81c7e3404c6c
     m_Address: Assets/Game/Settings/PrefabContainers/MenuPrefabsContainer.asset
     m_ReadOnly: 0
