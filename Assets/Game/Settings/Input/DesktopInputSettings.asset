@@ -38,7 +38,23 @@ MonoBehaviour:
     m_Id: 8a7851fc-c9b7-4651-84b1-e6614bbc45a9
     m_Processors: 
     m_Interactions: 
-    m_SingletonActionBindings: []
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: cef0ed4a-522c-4e3d-9a8b-4f47738dbbf4
+      m_Path: <Keyboard>/enter
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Select
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 15f28d9b-70dd-4789-ab38-28b89c5d96e6
+      m_Path: <Mouse>/leftButton
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Select
+      m_Flags: 0
     m_Flags: 0
   cancelAction:
     m_Name: Cancel

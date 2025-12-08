@@ -10,6 +10,7 @@ namespace Core
         Loading,
         MainMenu,
         GameMode,
+        Exit,
     }
 
     /// <summary>

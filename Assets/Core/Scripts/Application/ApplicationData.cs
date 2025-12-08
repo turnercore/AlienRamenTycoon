@@ -18,6 +18,7 @@ namespace Core
 
         public void ChangeApplicationState(ApplicationState applicationState)
         {
+            // Cleanup old application state
             this.ActiveApplicationState = applicationState;
         }
 

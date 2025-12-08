@@ -6,6 +6,7 @@ namespace Project
 {
     public class GdprUIReference : MenuReference
     {
-        public Button continueButton;
+        public Button acceptButton;
+        public Button declineButton;
     }
 }

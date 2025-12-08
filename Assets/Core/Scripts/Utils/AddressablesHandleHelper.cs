@@ -11,27 +11,39 @@ namespace Core
     /// </summary>
     public sealed class AddressablesHandleHelper : IDisposable
     {
-        private readonly List<AsyncOperationHandle> handles = new();
+        private struct HandleRegistration
+        {
+            public AsyncOperationHandle Handle;
+            public Action Unsubscribe;
+        }
+
+        private readonly List<HandleRegistration> registrations = new();
 
         /// <summary>
         /// Loads an addressable asset, stores the handle internally and returns it for the caller to await/use.
         /// </summary>
-        public AsyncOperationHandle<T> LoadAssetAsync<T>(AssetReferenceT<T> assetReference)
+        public AsyncOperationHandle<T> LoadAssetAsync<T>(
+            AssetReferenceT<T> assetReference,
+            Action<AsyncOperationHandle<T>> onCompleted = null
+        )
             where T : UnityEngine.Object
         {
             var handle = assetReference.LoadAssetAsync<T>();
-            RegisterHandle(handle);
+            TrackHandle(handle, onCompleted);
             return handle;
         }
 
         /// <summary>
         /// Loads an addressable asset using an address/key string to support non-AssetReference lookups.
         /// </summary>
-        public AsyncOperationHandle<T> LoadAssetAsync<T>(string address)
+        public AsyncOperationHandle<T> LoadAssetAsync<T>(
+            string address,
+            Action<AsyncOperationHandle<T>> onCompleted = null
+        )
             where T : UnityEngine.Object
         {
             var handle = Addressables.LoadAssetAsync<T>(address);
-            RegisterHandle(handle);
+            TrackHandle(handle, onCompleted);
             return handle;
         }
 
@@ -58,9 +70,12 @@ namespace Core
         /// <summary>
         /// Registers an externally created handle so the helper will release it later.
         /// </summary>
-        public AsyncOperationHandle<T> RegisterHandle<T>(AsyncOperationHandle<T> handle)
+        public AsyncOperationHandle<T> RegisterHandle<T>(
+            AsyncOperationHandle<T> handle,
+            Action<AsyncOperationHandle<T>> onCompleted = null
+        )
         {
-            handles.Add(handle);
+            TrackHandle(handle, onCompleted);
             return handle;
         }
 
@@ -74,8 +89,7 @@ namespace Core
                 return;
             }
 
-            Addressables.Release(handle);
-            handles.Remove(handle);
+            ReleaseRegistration(handle);
         }
 
         /// <summary>
@@ -83,20 +97,63 @@ namespace Core
         /// </summary>
         public void ReleaseAll()
         {
-            foreach (var handle in handles)
+            foreach (var registration in registrations)
             {
-                if (handle.IsValid())
+                registration.Unsubscribe?.Invoke();
+                if (registration.Handle.IsValid())
                 {
-                    Addressables.Release(handle);
+                    Addressables.Release(registration.Handle);
                 }
             }
 
-            handles.Clear();
+            registrations.Clear();
         }
 
         public void Dispose()
         {
             ReleaseAll();
+        }
+
+        private void TrackHandle<T>(
+            AsyncOperationHandle<T> handle,
+            Action<AsyncOperationHandle<T>> onCompleted
+        )
+        {
+            Action unsubscribe = null;
+            if (onCompleted != null)
+            {
+                void Wrapped(AsyncOperationHandle<T> op) => onCompleted(op);
+                handle.Completed += Wrapped;
+                unsubscribe = () => handle.Completed -= Wrapped;
+            }
+
+            registrations.Add(
+                new HandleRegistration
+                {
+                    Handle = handle,
+                    Unsubscribe = unsubscribe,
+                }
+            );
+        }
+
+        private void ReleaseRegistration(AsyncOperationHandle handle)
+        {
+            for (int i = 0; i < registrations.Count; i++)
+            {
+                if (!registrations[i].Handle.Equals(handle))
+                {
+                    continue;
+                }
+
+                registrations[i].Unsubscribe?.Invoke();
+                if (registrations[i].Handle.IsValid())
+                {
+                    Addressables.Release(registrations[i].Handle);
+                }
+
+                registrations.RemoveAt(i);
+                break;
+            }
         }
     }
 }

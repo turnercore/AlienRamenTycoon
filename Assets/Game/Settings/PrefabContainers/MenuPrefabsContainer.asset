@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MenuPrefabsContainer
   m_EditorClassIdentifier: Assembly-CSharp::MenuPrefabsContainer
   mainMenuReference:
-    m_AssetGUID: 
+    m_AssetGUID: 519ee1931e69fb5458418a5912928d91
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 

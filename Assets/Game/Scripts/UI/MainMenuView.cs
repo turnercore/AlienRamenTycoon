@@ -32,7 +32,7 @@ namespace Project
                 throw new NotImplementedException()
             );
             mainMenuReference.playButton.onClick.AddListener(() =>
-                menuApplicationStateData.startGameRequests.Invoke(GameMode.Tileset)
+                menuApplicationStateData.startGameRequests.Invoke(GameMode.Spaceship)
             );
         }
 

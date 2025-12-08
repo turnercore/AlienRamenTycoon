@@ -114,10 +114,17 @@ namespace Project
         private void WireButtons()
         {
             // Adding listners from the menu
-            gdprMenuReference.continueButton.onClick.AddListener(() =>
+            gdprMenuReference.acceptButton.onClick.AddListener(() =>
             {
                 applicationData.ChangeApplicationState(ApplicationState.MainMenu);
-                Object.Destroy(gdprMenuReference.gameObject);
+                Debug.Log("clicked agree");
+            });
+
+            gdprMenuReference.declineButton.onClick.AddListener(() =>
+            {
+                // Quit
+                applicationData.ChangeApplicationState(ApplicationState.Exit);
+                Debug.Log("clicked decline");
             });
         }
 

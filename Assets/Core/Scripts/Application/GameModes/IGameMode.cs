@@ -3,7 +3,8 @@
     public enum GameMode
     {
         Invalid,
-        Tileset,
+        Spaceship,
+        Tycoon,
     }
 
     /// <summary>

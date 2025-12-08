@@ -5,6 +5,7 @@ using Server;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.EventSystems;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Core
@@ -58,6 +59,7 @@ namespace Core
         public IEnumerator Start()
         {
             DontDestroyOnLoad(this);
+            EnsureEventSystem();
 
             // scene authoring is helping with making each scene stand-alone playable
             SceneReference activeSceneReference = FindFirstObjectByType<SceneReference>();
@@ -98,6 +100,40 @@ namespace Core
                 yield break;
             }
 
+            StartCoroutine(SetUpNetworking());
+
+            yield return CreatePlatformFactory();
+
+            // Load all boot settings
+            var splashBootSettingsHandle = Addressables.LoadAssetAsync<SplashBootSettings>(
+                initializerSettings.splashBootSettings
+            );
+            var mainMenuBootSettingsHandle = Addressables.LoadAssetAsync<MainMenuBootSettings>(
+                initializerSettings.mainMenuBootSettings
+            );
+            var gameModeBootSettingsHandle = Addressables.LoadAssetAsync<GameModeBootSettings>(
+                initializerSettings.gameModeBootSettings
+            );
+
+            yield return new WaitUntil(() =>
+                splashBootSettingsHandle.IsDone
+                && mainMenuBootSettingsHandle.IsDone
+                && gameModeBootSettingsHandle.IsDone
+            );
+            splashBootSettings = splashBootSettingsHandle.Result;
+            mainMenuBootSettings = mainMenuBootSettingsHandle.Result;
+            gameModeBootSettings = gameModeBootSettingsHandle.Result;
+
+            // We initialize the Application State Runner which will run the game states
+            menuApplicationStateData = new MenuApplicationStateData();
+            CreateApplicationStates();
+            ApplicationStateRunner applicationStateRunner =
+                gameObject.AddComponent<ApplicationStateRunner>();
+            applicationStateRunner.Initialize(applicationStates, applicationData, platform);
+        }
+
+        private IEnumerator SetUpNetworking()
+        {
             // --- NETWORK: load settings and create connection -----------------
             // Load network settings and create service
             Debug.Log("Loading network settings...");
@@ -156,36 +192,6 @@ namespace Core
                 Debug.Log("No network service created (null)");
             }
             // ------------------------------------------------------------------
-
-            // We make sure the platform is initialized before entering the game states
-            yield return CreatePlatformFactory();
-
-            // Load all boot settings
-            var splashBootSettingsHandle = Addressables.LoadAssetAsync<SplashBootSettings>(
-                initializerSettings.splashBootSettings
-            );
-            var mainMenuBootSettingsHandle = Addressables.LoadAssetAsync<MainMenuBootSettings>(
-                initializerSettings.mainMenuBootSettings
-            );
-            var gameModeBootSettingsHandle = Addressables.LoadAssetAsync<GameModeBootSettings>(
-                initializerSettings.gameModeBootSettings
-            );
-
-            yield return new WaitUntil(() =>
-                splashBootSettingsHandle.IsDone
-                && mainMenuBootSettingsHandle.IsDone
-                && gameModeBootSettingsHandle.IsDone
-            );
-            splashBootSettings = splashBootSettingsHandle.Result;
-            mainMenuBootSettings = mainMenuBootSettingsHandle.Result;
-            gameModeBootSettings = gameModeBootSettingsHandle.Result;
-
-            // We initialize the Application State Runner which will run the game states
-            menuApplicationStateData = new MenuApplicationStateData();
-            CreateApplicationStates();
-            ApplicationStateRunner applicationStateRunner =
-                gameObject.AddComponent<ApplicationStateRunner>();
-            applicationStateRunner.Initialize(applicationStates, applicationData, platform);
         }
 
         /// <summary>
@@ -235,6 +241,7 @@ namespace Core
                     applicationData,
                     gameModeBootSettings.gameModeSettings
                 ),
+                [ApplicationState.Exit] = new QuitApplicationState(),
             };
             createApplicationStateMarker.End();
         }
@@ -242,6 +249,23 @@ namespace Core
         private void OnDestroy()
         {
             networkService?.Dispose();
+        }
+
+        private void EnsureEventSystem()
+        {
+            if (EventSystem.current != null)
+            {
+                return;
+            }
+
+            var eventSystemGo = new GameObject("EventSystem");
+            eventSystemGo.AddComponent<EventSystem>();
+#if ENABLE_INPUT_SYSTEM
+            eventSystemGo.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+#else
+            eventSystemGo.AddComponent<StandaloneInputModule>();
+#endif
+            DontDestroyOnLoad(eventSystemGo);
         }
     }
 }

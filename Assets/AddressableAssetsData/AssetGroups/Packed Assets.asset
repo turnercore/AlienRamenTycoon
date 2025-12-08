@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Packed Assets
   m_GUID: c177604d30ac27d4b9598b5d3e0cee7a
   m_SerializeEntries:
+  - m_GUID: 519ee1931e69fb5458418a5912928d91
+    m_Address: MainMenuScreen.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7a2bab562aa5dcf4d8ce734c59d846f0
     m_Address: SplashScreen.prefab
     m_ReadOnly: 0

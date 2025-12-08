@@ -22,8 +22,11 @@ namespace Project
         private readonly ApplicationData applicationData;
         private readonly MenuApplicationStateData menuApplicationStateData;
         private readonly MainMenuBootSettings mainMenuBootSettings;
+        private readonly AddressablesHandleHelper addressableHandles = new();
+        private Action<GameMode> startGameHandler;
         private MainMenuView mainMenuView;
         private MainMenuReference mainMenuReference;
+        private GameObject mainMenuPrefab;
         private AsyncOperationHandle<SceneInstance> loadSceneAsync;
         public bool IsApplicationStateInitialized { get; set; } = true;
 
@@ -40,27 +43,42 @@ namespace Project
 
         public void EnterApplicationState()
         {
-            Addressables
-                .LoadAssetAsync<MainMenuReference>(
-                    mainMenuBootSettings.menuPrefabsContainer.mainMenuReference
-                )
-                .Completed += handle =>
-            {
-                OnMenuLoaded(handle);
-            };
+            addressableHandles.LoadAssetAsync<GameObject>(
+                mainMenuBootSettings.menuPrefabsContainer.mainMenuReference,
+                handle => OnMenuLoaded(handle)
+            );
 
-            menuApplicationStateData.startGameRequests += mode =>
+            startGameHandler = mode =>
             {
                 applicationData.ChangeApplicationState(ApplicationState.GameMode);
                 applicationData.ChangeGameModeState(mode);
             };
+            menuApplicationStateData.startGameRequests += startGameHandler;
         }
 
-        private void OnMenuLoaded(AsyncOperationHandle<MainMenuReference> handle)
+        private void OnMenuLoaded(AsyncOperationHandle<GameObject> handle)
         {
-            mainMenuReference = GameObject
-                .Instantiate<MainMenuReference>(handle.Result)
-                .GetComponent<MainMenuReference>();
+            if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result == null)
+            {
+                Debug.LogError("Failed to load MainMenuReference.");
+                return;
+            }
+
+            mainMenuPrefab = handle.Result;
+
+            // Instantiate the main menu prefab
+            GameObject mainMenuInstance = GameObject.Instantiate(mainMenuPrefab);
+
+            mainMenuReference = mainMenuPrefab.GetComponent<MainMenuReference>();
+
+            if (mainMenuReference == null)
+            {
+                Debug.LogError("MainMenuReference prefab missing component");
+                return;
+            }
+
+            mainMenuView = new MainMenuView(mainMenuReference, menuApplicationStateData);
+            mainMenuView.Initialize();
         }
 
         public ApplicationState Tick()
@@ -73,14 +91,20 @@ namespace Project
 
         public void Dispose()
         {
+            if (startGameHandler != null)
+            {
+                menuApplicationStateData.startGameRequests -= startGameHandler;
+                startGameHandler = null;
+            }
+
             mainMenuView?.Dispose();
             if (mainMenuReference != null)
             {
                 GameObject.Destroy(mainMenuReference.gameObject);
+                mainMenuReference = null;
             }
 
-            Addressables.Release(mainMenuReference);
-            //Addressables.Release(mainMenuView);
+            addressableHandles.Dispose();
         }
 
         public void ExitApplicationState() { }
