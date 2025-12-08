@@ -11,14 +11,17 @@ namespace Project
     {
         private readonly MenuApplicationStateData menuApplicationStateData;
         private MainMenuReference mainMenuReference;
+        private readonly ApplicationData applicationData;
 
         public MainMenuView(
             MainMenuReference mainMenuReference, // Use the specific type
-            MenuApplicationStateData menuApplicationStateData
+            MenuApplicationStateData menuApplicationStateData,
+            ApplicationData applicationData
         )
         {
             this.mainMenuReference = mainMenuReference;
             this.menuApplicationStateData = menuApplicationStateData;
+            this.applicationData = applicationData;
         }
 
         public void Initialize()
@@ -27,13 +30,19 @@ namespace Project
             {
                 mainMenuReference = GameObject.Instantiate(mainMenuReference);
             }
-            mainMenuReference.exitButton.onClick.AddListener(Application.Quit);
+            mainMenuReference.exitButton.onClick.AddListener(OnQuitClicked);
             mainMenuReference.optionsButton.onClick.AddListener(() =>
                 throw new NotImplementedException()
             );
             mainMenuReference.playButton.onClick.AddListener(() =>
                 menuApplicationStateData.startGameRequests.Invoke(GameMode.Spaceship)
             );
+        }
+
+        private void OnQuitClicked()
+        {
+            // Change to a Quit Application State
+            applicationData.ChangeApplicationState(ApplicationState.Exit);
         }
 
         public void Tick() { }

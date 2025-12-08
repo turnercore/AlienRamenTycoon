@@ -71,7 +71,11 @@ namespace Project
                 return;
             }
 
-            mainMenuView = new MainMenuView(mainMenuReference, menuApplicationStateData);
+            mainMenuView = new MainMenuView(
+                mainMenuReference,
+                menuApplicationStateData,
+                applicationData
+            );
             mainMenuView.Initialize();
         }
 
