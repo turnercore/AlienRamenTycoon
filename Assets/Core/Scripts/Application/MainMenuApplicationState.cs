@@ -1,10 +1,7 @@
 using System;
 using Core;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.ResourceManagement.ResourceProviders;
-using UnityEngine.SceneManagement;
 
 namespace Project
 {
@@ -26,8 +23,6 @@ namespace Project
         private Action<GameMode> startGameHandler;
         private MainMenuView mainMenuView;
         private MainMenuReference mainMenuReference;
-        private GameObject mainMenuPrefab;
-        private AsyncOperationHandle<SceneInstance> loadSceneAsync;
         public bool IsApplicationStateInitialized { get; set; } = true;
 
         public MainMenuApplicationState(
@@ -53,6 +48,7 @@ namespace Project
                 applicationData.ChangeApplicationState(ApplicationState.GameMode);
                 applicationData.ChangeGameModeState(mode);
             };
+
             menuApplicationStateData.startGameRequests += startGameHandler;
         }
 
@@ -64,12 +60,10 @@ namespace Project
                 return;
             }
 
-            mainMenuPrefab = handle.Result;
-
             // Instantiate the main menu prefab
-            GameObject mainMenuInstance = GameObject.Instantiate(mainMenuPrefab);
+            GameObject mainMenuInstance = GameObject.Instantiate(handle.Result);
 
-            mainMenuReference = mainMenuPrefab.GetComponent<MainMenuReference>();
+            mainMenuReference = mainMenuInstance.GetComponent<MainMenuReference>();
 
             if (mainMenuReference == null)
             {

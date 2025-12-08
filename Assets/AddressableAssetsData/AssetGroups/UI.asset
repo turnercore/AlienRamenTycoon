@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Packed Assets
+  m_Name: UI
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
-  m_GroupName: Packed Assets
+  m_GroupName: UI
   m_GUID: c177604d30ac27d4b9598b5d3e0cee7a
   m_SerializeEntries:
   - m_GUID: 519ee1931e69fb5458418a5912928d91

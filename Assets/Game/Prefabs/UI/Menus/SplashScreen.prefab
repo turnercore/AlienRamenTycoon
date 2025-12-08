@@ -180,7 +180,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76875b295342b4003b15b448e9509ca2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Project.GdprUIReference
+  m_EditorClassIdentifier: Assembly-CSharp::Project.SplashMenuReference
   acceptButton: {fileID: 4827559666357854168}
   declineButton: {fileID: 3596849271971172557}
 --- !u!1 &2827393919430138200

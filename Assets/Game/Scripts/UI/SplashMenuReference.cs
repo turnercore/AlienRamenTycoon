@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Project
 {
-    public class GdprUIReference : MenuReference
+    public class SplashMenuReference : MenuReference
     {
         public Button acceptButton;
         public Button declineButton;
