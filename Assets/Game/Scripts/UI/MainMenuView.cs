@@ -18,19 +18,22 @@ namespace Project
         private GameObject optionsMenuPrefab;
         private readonly AddressablesHandleHelper handles = new();
         private bool isOptionsMenuOpen = false;
+        private readonly OptionsData optionsData;
         private UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject> optionsHandle;
 
         public MainMenuView(
             MainMenuReference mainMenuReference, // Use the specific type
             MenuApplicationStateData menuApplicationStateData,
             UnityEngine.AddressableAssets.AssetReferenceT<GameObject> optionsMenuPrefabReference,
-            ApplicationData applicationData
+            ApplicationData applicationData,
+            OptionsData optionsData
         )
         {
             this.mainMenuReference = mainMenuReference;
             this.menuApplicationStateData = menuApplicationStateData;
             this.optionsMenuPrefabReference = optionsMenuPrefabReference;
             this.applicationData = applicationData;
+            this.optionsData = optionsData;
 
             // go ahead and async load the options menu prefab from addressables
             optionsHandle = handles.LoadAssetAsync<GameObject>(
@@ -99,7 +102,8 @@ namespace Project
             optionsMenuView = new OptionsMenuView(
                 optionsMenuPrefab,
                 menuApplicationStateData,
-                applicationData
+                applicationData,
+                optionsData
             );
             // subscribe to the closed event
             optionsMenuView.OptionsClosed += () =>

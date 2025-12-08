@@ -13,7 +13,7 @@ namespace Core
     /// <summary>
     /// The main boot class which is initializing the project, loads the platforms settings, initializes the platforms and creates the game states
     /// </summary>
-    public class EntryPoint : MonoBehaviour
+    public sealed class EntryPoint : MonoBehaviour
     {
         // Authoring
         public AssetReferenceT<InitializerSettingsFile> initializerSettingsFile;
@@ -31,6 +31,8 @@ namespace Core
         private GameModeBootSettings gameModeBootSettings;
         private MenuApplicationStateData menuApplicationStateData;
 
+        private readonly OptionsData optionsData = new();
+
         // Network
         private INetworkService networkService;
 
@@ -40,6 +42,7 @@ namespace Core
         [RuntimeInitializeOnLoadMethod]
         private static void Initialize()
         {
+            // Load options data
 #if UNITY_EDITOR
             if (BootMode.BootType == BootType.UnityDefault)
             {
@@ -59,6 +62,7 @@ namespace Core
         public IEnumerator Start()
         {
             DontDestroyOnLoad(this);
+            optionsData.Load();
             EnsureEventSystem();
 
             // scene authoring is helping with making each scene stand-alone playable
@@ -235,7 +239,8 @@ namespace Core
                 [ApplicationState.MainMenu] = new MainMenuApplicationState(
                     applicationData,
                     menuApplicationStateData,
-                    mainMenuBootSettings
+                    mainMenuBootSettings,
+                    optionsData
                 ),
                 [ApplicationState.GameMode] = new GameModeApplicationState(
                     applicationData,

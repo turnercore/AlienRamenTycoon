@@ -16,12 +16,14 @@ namespace Project
         public OptionsMenuView(
             GameObject optionsMenuPrefab,
             MenuApplicationStateData menuApplicationStateData,
-            ApplicationData applicationData
+            ApplicationData applicationData,
+            OptionsData optionsData
         )
         {
             this.optionsMenuPrefab = optionsMenuPrefab;
             this.menuApplicationStateData = menuApplicationStateData;
             this.applicationData = applicationData;
+            this.optionsData = optionsData;
         }
 
         public void Initialize()
@@ -34,18 +36,13 @@ namespace Project
             {
                 optionsMenuReference = GameObject.Instantiate(optionsMenuReference);
             }
-
-            this.optionsData = applicationData.optionsData;
-
             AddListeners();
             LoadSettings();
         }
 
         private void LoadSettings()
         {
-            optionsMenuReference.masterVolumeSlider.value = applicationData
-                .optionsData
-                .MasterVolume;
+            optionsMenuReference.masterVolumeSlider.value = optionsData.MasterVolume;
             optionsMenuReference.musicVolumeSlider.value = optionsData.MusicVolume;
             optionsMenuReference.sfxVolumeSlider.value = optionsData.SfxVolume;
             optionsMenuReference.voiceVolumeSlider.value = optionsData.VoiceVolume;

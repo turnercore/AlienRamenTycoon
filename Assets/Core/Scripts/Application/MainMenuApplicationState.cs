@@ -20,6 +20,7 @@ namespace Project
         private readonly MenuApplicationStateData menuApplicationStateData;
         private readonly MainMenuBootSettings mainMenuBootSettings;
         private readonly AddressablesHandleHelper addressableHandles = new();
+        private readonly OptionsData optionsData;
         private Action<GameMode> startGameHandler;
         private MainMenuView mainMenuView;
         private MainMenuReference mainMenuReference;
@@ -28,12 +29,14 @@ namespace Project
         public MainMenuApplicationState(
             ApplicationData applicationData,
             MenuApplicationStateData menuApplicationStateData,
-            MainMenuBootSettings mainMenuBootSettings
+            MainMenuBootSettings mainMenuBootSettings,
+            OptionsData optionsData
         )
         {
             this.applicationData = applicationData;
             this.menuApplicationStateData = menuApplicationStateData;
             this.mainMenuBootSettings = mainMenuBootSettings;
+            this.optionsData = optionsData;
         }
 
         public void EnterApplicationState()
@@ -77,7 +80,8 @@ namespace Project
                 optionsMenuPrefabReference: mainMenuBootSettings
                     .menuPrefabsContainer
                     .optionsMenuReference,
-                applicationData
+                applicationData,
+                optionsData: optionsData
             );
             mainMenuView.Initialize();
         }
