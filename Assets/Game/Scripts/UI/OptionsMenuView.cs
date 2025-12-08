@@ -4,15 +4,14 @@ using UnityEngine;
 
 namespace Project
 {
-    /// <summary>
-    /// Options Menu Overlay View.
-    /// </summary>
     public class OptionsMenuView : IApplicationLifecycle
     {
         private readonly MenuApplicationStateData menuApplicationStateData;
         private GameObject optionsMenuPrefab;
         private OptionsMenuReference optionsMenuReference;
         private readonly ApplicationData applicationData;
+        private OptionsData optionsData;
+        public Action OptionsClosed;
 
         public OptionsMenuView(
             GameObject optionsMenuPrefab,
@@ -27,7 +26,6 @@ namespace Project
 
         public void Initialize()
         {
-            // Create the options menu reference from the prefab
             optionsMenuReference = GameObject
                 .Instantiate(optionsMenuPrefab)
                 .GetComponent<OptionsMenuReference>();
@@ -37,14 +35,32 @@ namespace Project
                 optionsMenuReference = GameObject.Instantiate(optionsMenuReference);
             }
 
-            // Set up listeners
+            this.optionsData = applicationData.optionsData;
+
+            AddListeners();
+            LoadSettings();
+        }
+
+        private void LoadSettings()
+        {
+            optionsMenuReference.masterVolumeSlider.value = applicationData
+                .optionsData
+                .MasterVolume;
+            optionsMenuReference.musicVolumeSlider.value = optionsData.MusicVolume;
+            optionsMenuReference.sfxVolumeSlider.value = optionsData.SfxVolume;
+            optionsMenuReference.voiceVolumeSlider.value = optionsData.VoiceVolume;
+            optionsMenuReference.offlineModeToggle.isOn = optionsData.OfflineMode;
+            optionsMenuReference.displayModeDropdown.value = (int)optionsData.DisplayMode;
+        }
+
+        private void AddListeners()
+        {
             optionsMenuReference.offlineModeToggle.onValueChanged.AddListener(OnOfflineModeToggled);
             optionsMenuReference.displayModeDropdown.onValueChanged.AddListener(
                 OnDisplayModeChanged
             );
             optionsMenuReference.backButton.onClick.AddListener(OnBackClicked);
 
-            // vol sliders
             optionsMenuReference.masterVolumeSlider.onValueChanged.AddListener(
                 OnMasterVolumeChanged
             );
@@ -55,37 +71,44 @@ namespace Project
 
         private void OnMasterVolumeChanged(float value)
         {
-            Debug.Log($"Master volume changed to: {value}");
+            Debug.Log("Master volume changed to: " + value);
+            optionsData.SetMasterVolume(value);
         }
 
         private void OnMusicVolumeChanged(float value)
         {
             Debug.Log($"Music volume changed to: {value}");
+            optionsData.SetMusicVolume(value);
         }
 
         private void OnSfxVolumeChanged(float value)
         {
             Debug.Log($"SFX volume changed to: {value}");
+            optionsData.SetSfxVolume(value);
         }
 
         private void OnVoiceVolumeChanged(float value)
         {
             Debug.Log($"Voice volume changed to: {value}");
+            optionsData.SetVoiceVolume(value);
         }
 
         private void OnOfflineModeToggled(bool isOn)
         {
-            Debug.Log($"Offline mode toggled: {isOn}");
+            Debug.Log($"Offline mode toggled to: {isOn}");
+            optionsData.SetOfflineMode(isOn);
         }
 
         private void OnDisplayModeChanged(int modeIndex)
         {
             Debug.Log($"Display mode changed to index: {modeIndex}");
+            optionsData.SetDisplayMode((FullScreenMode)modeIndex);
         }
 
         private void OnBackClicked()
         {
             Debug.Log("Back button clicked - returning to main menu...");
+            OptionsClosed?.Invoke();
             Dispose();
         }
 
@@ -118,6 +141,8 @@ namespace Project
 
             GameObject.Destroy(optionsMenuReference.gameObject);
             optionsMenuReference = null;
+            // Save options to player perfs if not already done
+            optionsData.Save();
         }
     }
 }

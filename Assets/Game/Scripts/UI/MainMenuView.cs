@@ -95,16 +95,36 @@ namespace Project
 
             isOptionsMenuOpen = true;
 
-            // Create the optinons menu view
+            // Create the options menu view
             optionsMenuView = new OptionsMenuView(
                 optionsMenuPrefab,
                 menuApplicationStateData,
                 applicationData
             );
+            // subscribe to the closed event
+            optionsMenuView.OptionsClosed += () =>
+            {
+                isOptionsMenuOpen = false;
+            };
             optionsMenuView.Initialize();
         }
 
-        public void Tick() { }
+        public void Tick()
+        {
+            if (isOptionsMenuOpen && optionsMenuView == null)
+            {
+                isOptionsMenuOpen = false;
+            }
+
+            if (isOptionsMenuOpen && mainMenuReference.gameObject.activeSelf)
+            {
+                mainMenuReference.gameObject.SetActive(false);
+            }
+            else if (!isOptionsMenuOpen && !mainMenuReference.gameObject.activeSelf)
+            {
+                mainMenuReference.gameObject.SetActive(true);
+            }
+        }
 
         public void Dispose()
         {

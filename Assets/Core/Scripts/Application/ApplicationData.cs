@@ -16,6 +16,8 @@ namespace Core
         public ApplicationState ActiveApplicationState { get; private set; }
         public GameMode ActiveGameMode { get; private set; }
 
+        public OptionsData optionsData { get; private set; }
+
         public void ChangeApplicationState(ApplicationState applicationState)
         {
             // Cleanup old application state
