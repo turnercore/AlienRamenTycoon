@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 using Core;
 using Nakama;
@@ -9,14 +10,14 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-namespace Server // ← important: keep your own namespace; we "use Nakama" for SDK types
+namespace Server
 {
     public class NakamaConnection : INetworkConnection
     {
         public NetworkConnectionStatus Status { get; private set; }
 
         private NakamaSettings settings;
-        private AsyncOperationHandle<NakamaSettings> settingsHandle;
+        private readonly AddressablesHandleHelper handles = new();
 
         public IClient Client { get; private set; }
         public ISession Session { get; private set; }
@@ -31,28 +32,29 @@ namespace Server // ← important: keep your own namespace; we "use Nakama" for 
 
         public void Dispose()
         {
-            CloseConnection();
-            if (settingsHandle.IsValid())
-            {
-                Addressables.Release(settingsHandle);
-            }
+            handles.Dispose();
+            CloseConnectionAsync()
+                .Forget(ex => Debug.LogError($"Nakama: error during Dispose: {ex}"));
             errorCodes = null;
         }
 
-        private async void CloseConnection()
+        private async Task CloseConnectionAsync()
         {
-            try
+            if (Socket != null && Socket.IsConnected)
             {
-                if (Socket != null && Socket.IsConnected)
+                try
                 {
                     await Socket.CloseAsync();
                 }
+                catch (WebSocketException)
+                {
+                    // Ignore forced close during shutdown.
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"Nakama: error while closing socket: {ex}");
+                }
             }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"Nakama: error while closing socket: {ex}");
-            }
-
             Socket = null;
             Session = null;
             Client = null;
@@ -67,15 +69,16 @@ namespace Server // ← important: keep your own namespace; we "use Nakama" for 
             Debug.Log("NakamaConnection.Initialize() started");
 
             // Load settings via Addressables
+            AsyncOperationHandle<NakamaSettings> settingsHandle;
             if (SettingsAddress == null)
             {
                 Debug.Log("SettingsAddress is null, using default: " + _settingsAddress);
-                settingsHandle = Addressables.LoadAssetAsync<NakamaSettings>(_settingsAddress);
+                settingsHandle = handles.LoadAssetAsync<NakamaSettings>(_settingsAddress);
             }
             else
             {
                 Debug.Log("Loading NakamaSettings from SettingsAddress");
-                settingsHandle = Addressables.LoadAssetAsync<NakamaSettings>(SettingsAddress);
+                settingsHandle = handles.LoadAssetAsync<NakamaSettings>(SettingsAddress);
             }
 
             yield return new WaitUntil(() => settingsHandle.IsDone);

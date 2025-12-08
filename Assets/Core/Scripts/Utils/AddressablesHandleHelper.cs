@@ -25,12 +25,33 @@ namespace Core
         }
 
         /// <summary>
+        /// Loads an addressable asset using an address/key string to support non-AssetReference lookups.
+        /// </summary>
+        public AsyncOperationHandle<T> LoadAssetAsync<T>(string address)
+            where T : UnityEngine.Object
+        {
+            var handle = Addressables.LoadAssetAsync<T>(address);
+            RegisterHandle(handle);
+            return handle;
+        }
+
+        /// <summary>
         /// Loads an asset and blocks until completion, returning the asset instance.
         /// </summary>
         public T LoadAssetAndWait<T>(AssetReferenceT<T> assetReference)
             where T : UnityEngine.Object
         {
             var handle = LoadAssetAsync(assetReference);
+            return handle.WaitForCompletion();
+        }
+
+        /// <summary>
+        /// Loads an asset by address and blocks until completion, returning the asset instance.
+        /// </summary>
+        public T LoadAssetAndWait<T>(string address)
+            where T : UnityEngine.Object
+        {
+            var handle = LoadAssetAsync<T>(address);
             return handle.WaitForCompletion();
         }
 
