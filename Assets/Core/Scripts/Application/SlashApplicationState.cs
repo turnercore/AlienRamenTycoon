@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Core;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -14,7 +15,9 @@ namespace Project
         private readonly SplashBootSettings bootInitializer;
         private readonly ApplicationData applicationData;
         public bool IsApplicationStateInitialized { get; set; } = true;
-        private GdprUIReference gdprReferencePrefab;
+        private GameObject gdprReferencePrefab;
+        private GdprUIReference gdprMenuReference;
+        private readonly AddressablesHandleHelper handles = new();
 
         public SplashApplicationState(
             SplashBootSettings bootInitializer,
@@ -27,12 +30,20 @@ namespace Project
 
         public void EnterApplicationState()
         {
-            Debug.Log("SplashApplicationState.EnterApplicationState() called");
+            // Guard statements
+            if (!EnterApplicationStateGuard())
+                return;
 
+            LoadMenuFromAddressables();
+        }
+
+        private bool EnterApplicationStateGuard()
+        {
             if (bootInitializer == null)
             {
                 Debug.LogError("bootInitializer is null!");
-                return;
+                FailOutOfApplicationState();
+                return false;
             }
 
             if (bootInitializer.menuPrefabsContainer == null)
@@ -40,49 +51,69 @@ namespace Project
                 Debug.LogError(
                     "menuPrefabsContainer is null! Did you assign it in SplashBootSettings?"
                 );
-                return;
+                FailOutOfApplicationState();
+                return false;
             }
 
-            Debug.Log(
-                $"Loading GDPR UI Reference from: {bootInitializer.menuPrefabsContainer.gdprUIReference}"
-            );
+            return true;
+        }
 
+        private async void LoadMenuFromAddressables()
+        {
             if (gdprReferencePrefab == null)
             {
-                var prefab = Addressables
+                // Loading the gdpr prefab from our prefab references
+                handles
                     .LoadAssetAsync<GameObject>(
                         bootInitializer.menuPrefabsContainer.gdprUIReference
                     )
-                    .WaitForCompletion();
-
-                if (prefab == null)
+                    .Completed += op =>
                 {
-                    Debug.LogError("Failed to load GDPR prefab!");
-                    return;
-                }
-
-                Debug.Log($"Loaded prefab: {prefab.name}");
-                gdprReferencePrefab = GameObject
-                    .Instantiate(prefab)
-                    .GetComponent<GdprUIReference>();
-
-                if (gdprReferencePrefab == null)
-                {
-                    Debug.LogError("Prefab does not have GdprUIReference component!");
-                    return;
-                }
+                    if (
+                        op.Status
+                        == UnityEngine
+                            .ResourceManagement
+                            .AsyncOperations
+                            .AsyncOperationStatus
+                            .Succeeded
+                    )
+                    {
+                        gdprReferencePrefab = op.Result;
+                        CreateMenu();
+                    }
+                    else
+                    {
+                        FailOutOfApplicationState();
+                        Debug.LogError("Failed to load GDPR UI prefab from Addressables.");
+                    }
+                };
             }
+        }
 
-            GdprUIReference gdprReference = GameObject
+        private void CreateMenu()
+        {
+            // Instantiate the GDPR UI from the loaded prefab
+            gdprMenuReference = GameObject
                 .Instantiate(gdprReferencePrefab.gameObject)
                 .GetComponent<GdprUIReference>();
 
-            Debug.Log($"Instantiated GDPR UI: {gdprReference.gameObject.name}");
+            if (gdprMenuReference == null)
+            {
+                Debug.LogError("Instantiated GDPR UI does not have GdprUIReference component!");
+                FailOutOfApplicationState();
+                return;
+            }
 
-            gdprReference.continueButton.onClick.AddListener(() =>
+            WireButtons();
+        }
+
+        private void WireButtons()
+        {
+            // Adding listners from the menu
+            gdprMenuReference.continueButton.onClick.AddListener(() =>
             {
                 applicationData.ChangeApplicationState(ApplicationState.MainMenu);
-                Object.Destroy(gdprReference.gameObject);
+                Object.Destroy(gdprMenuReference.gameObject);
             });
         }
 
@@ -95,12 +126,34 @@ namespace Project
 
         public void Dispose()
         {
-            // Clean up addressable resources if needed
-            Addressables.Release(gdprReferencePrefab);
+            // Destroy instantiated GDPR UI if it still exists
+            if (gdprMenuReference != null)
+            {
+                Object.Destroy(gdprMenuReference.gameObject);
+                gdprMenuReference = null;
+            }
+
+            // Release all loaded addressable assets
+            handles.ReleaseAll();
+            handles.Dispose();
         }
 
-        public void ExitApplicationState() { }
+        // what should happen if it fails out of creating something??
 
-        public void DisposeApplicationState() { }
+        private void FailOutOfApplicationState()
+        {
+            Debug.LogError("Failed out of Splash Application State.");
+            //Dispose();
+        }
+
+        public void ExitApplicationState()
+        {
+            Dispose();
+        }
+
+        public void DisposeApplicationState()
+        {
+            Dispose();
+        }
     }
 }
