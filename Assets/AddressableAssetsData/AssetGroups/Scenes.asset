@@ -15,8 +15,23 @@ MonoBehaviour:
   m_GroupName: Scenes
   m_GUID: ebccce647f7366a43aee24ebee5dd03e
   m_SerializeEntries:
+  - m_GUID: 62526c2d61d0d8243a04484d2464a93d
+    m_Address: Spaceship.unity
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a453071be3f88bf499649752c43af3a7
+    m_Address: Tycoon.unity
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d743a2ca431ad2c468e366315e67a4be
     m_Address: Main.unity
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d95ed6d5b00c4da46b665b007a5ca8f3
+    m_Address: MainMenu.unity
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
