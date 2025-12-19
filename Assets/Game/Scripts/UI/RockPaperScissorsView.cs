@@ -10,21 +10,22 @@ namespace Project
 {
     public class RockPaperScissorsView : IApplicationLifecycle
     {
-        private readonly MenuApplicationStateData menuApplicationStateData;
         private readonly GameObject rockPaperScissorsMenuPrefab;
         private RockPaperScissorsMenuRef rockPaperScissorsMenuRef;
-        private readonly ApplicationData applicationData;
 
         // map of which button corresponds to which action
         private readonly Dictionary<Button, RockPaperScissorsAction> buttonActionMap;
+        public event Action OnQuitRequested;
+        public event Action<RockPaperScissorsAction> OnActionSubmitted;
+        public bool initalized;
 
-        public RockPaperScissorsView(
-            GameObject rockPaperScissorsMenuPrefab,
-            MenuApplicationStateData menuApplicationStateData,
-            ApplicationData applicationData
-        ) { }
+        public RockPaperScissorsView(GameObject rockPaperScissorsMenuPrefab)
+        {
+            this.rockPaperScissorsMenuPrefab = rockPaperScissorsMenuPrefab;
+            buttonActionMap = new Dictionary<Button, RockPaperScissorsAction>();
+        }
 
-        private enum RockPaperScissorsAction
+        public enum RockPaperScissorsAction
         {
             Rock,
             Paper,
@@ -33,11 +34,15 @@ namespace Project
 
         public void Initialize()
         {
+            if (initalized)
+                return;
+
             rockPaperScissorsMenuRef = GameObject
                 .Instantiate(rockPaperScissorsMenuPrefab)
                 .GetComponent<RockPaperScissorsMenuRef>();
             AddListeners();
             RandomizeButtons();
+            initalized = true;
         }
 
         private void AddListeners()
@@ -51,9 +56,8 @@ namespace Project
 
         private void OnQuitClicked()
         {
-            // Quit clicked, we need to transition to application closed state
-            applicationData.ChangeApplicationState(ApplicationState.Exit);
-            Dispose();
+            // Quit clicked, bubble to the owning game mode
+            OnQuitRequested?.Invoke();
         }
 
         public void Tick() { }
@@ -91,21 +95,6 @@ namespace Project
         private void OnButton1Clicked()
         {
             //Make sure the button is mapped
-            if (!buttonActionMap.ContainsKey(rockPaperScissorsMenuRef.button2))
-            {
-                Debug.LogError("Button 2 not mapped to an action!");
-                return;
-            }
-
-            Debug.Log(
-                "Button 2 clicked - action: " + buttonActionMap[rockPaperScissorsMenuRef.button2]
-            );
-            SubmitAction(buttonActionMap[rockPaperScissorsMenuRef.button2]);
-        }
-
-        private void OnButton2Clicked()
-        {
-            //Make sure the button is mapped
             if (!buttonActionMap.ContainsKey(rockPaperScissorsMenuRef.button1))
             {
                 Debug.LogError("Button 1 not mapped to an action!");
@@ -116,6 +105,21 @@ namespace Project
                 "Button 1 clicked - action: " + buttonActionMap[rockPaperScissorsMenuRef.button1]
             );
             SubmitAction(buttonActionMap[rockPaperScissorsMenuRef.button1]);
+        }
+
+        private void OnButton2Clicked()
+        {
+            //Make sure the button is mapped
+            if (!buttonActionMap.ContainsKey(rockPaperScissorsMenuRef.button2))
+            {
+                Debug.LogError("Button 2 not mapped to an action!");
+                return;
+            }
+
+            Debug.Log(
+                "Button 2 clicked - action: " + buttonActionMap[rockPaperScissorsMenuRef.button2]
+            );
+            SubmitAction(buttonActionMap[rockPaperScissorsMenuRef.button2]);
         }
 
         private void RandomizeButtons()
@@ -158,7 +162,7 @@ namespace Project
             }
         }
 
-        private void UpdateConnectionStatus(string status)
+        public void UpdateConnectionStatus(string status)
         {
             rockPaperScissorsMenuRef.connectionStatusText.text = status;
         }
@@ -184,6 +188,7 @@ namespace Project
         {
             // Placeholder for submitting action to server logic
             Debug.Log("Submitting action to server: " + action);
+            OnActionSubmitted?.Invoke(action);
         }
 
         private void HandleServerResponse(string response)

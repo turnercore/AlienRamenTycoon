@@ -2,11 +2,14 @@ using System;
 using System.Collections;
 using System.Threading.Tasks;
 using Core;
+using UnityEditor.PackageManager;
 
 namespace Server
 {
     public interface INetworkService : IDisposable
     {
+        public Action<NetworkConnectionStatus> OnNetworkStatusChanged { get; set; }
+
         INetworkConnection Connection { get; }
 
         /// <summary>

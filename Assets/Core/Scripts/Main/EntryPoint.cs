@@ -287,7 +287,7 @@ namespace Core
                 ),
                 [ApplicationState.GameMode] = new GameModeApplicationState(
                     applicationData,
-                    gameModeBootSettings.gameModeSettings
+                    gameModeBootSettings
                 ),
                 [ApplicationState.Exit] = new QuitApplicationState(),
             };
