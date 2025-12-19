@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Net.WebSockets;
 using System.Threading;
-using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Nakama;
@@ -54,6 +53,7 @@ namespace Server
         private readonly AddressablesHandleHelper handles = new();
         private CancellationTokenSource heartbeatCts;
         private CancellationTokenSource reconnectCts;
+        private string cachedDeviceId;
 
         public IClient Client { get; private set; }
         public ISession Session { get; private set; }
@@ -159,6 +159,8 @@ namespace Server
             settings = settingsHandle.Result;
             Debug.Log("NakamaSettings loaded successfully. Starting connect...");
 
+            cachedDeviceId = PrepareDeviceId();
+
             // Run the connect task and wait for it here so we don't rely on async void.
             var connectTask = TryToConnectAsync();
             while (!connectTask.IsCompleted)
@@ -226,8 +228,12 @@ namespace Server
                         + $"  serverKeyTrimmed='{serverKey}' (len={serverKey.Length})"
                 );
 
-                // Optional: ping endpoint to verify we're hitting the right place
-                await DebugPingEndpointAsync(scheme, host, port);
+                // Optional: ping endpoint to verify we're hitting the right place.
+                // Only run this on the Unity main thread to avoid UnityWebRequest errors.
+                if (SynchronizationContext.Current == mainThreadContext)
+                {
+                    await DebugPingEndpointAsync(scheme, host, port);
+                }
 
                 Client = new Client(
                     scheme,
@@ -255,29 +261,20 @@ namespace Server
                 errorCodes = new[] { "nakama_client_create_failed" };
                 return;
             }
-
             // --- Authenticate device -----------------------------------------
             try
             {
-                var deviceId = PlayerPrefs.GetString(
-                    "nakama.deviceId",
-                    SystemInfo.deviceUniqueIdentifier
-                );
-
-                if (
-                    deviceId == SystemInfo.unsupportedIdentifier
-                    || string.IsNullOrWhiteSpace(deviceId)
-                )
+                var deviceId = cachedDeviceId;
+                if (string.IsNullOrWhiteSpace(deviceId))
                 {
-                    deviceId = Guid.NewGuid().ToString();
+                    deviceId = Guid.NewGuid().ToString("N");
+                    cachedDeviceId = deviceId;
                 }
-
-                PlayerPrefs.SetString("nakama.deviceId", deviceId);
-                PlayerPrefs.Save();
 
                 Debug.Log(
                     $"Nakama: AuthenticateDeviceAsync to {Client.Scheme}://{Client.Host}:{Client.Port} with deviceId='{deviceId}'"
                 );
+
                 Session = await Client.AuthenticateDeviceAsync(deviceId);
                 Debug.Log("Nakama: AuthenticateDeviceAsync succeeded.");
             }
@@ -377,6 +374,30 @@ namespace Server
                 StopHeartbeat();
                 TriggerReconnect("socket exception");
             }
+        }
+
+        private string PrepareDeviceId()
+        {
+            var instanceId = GetInstanceId();
+            Debug.Log($"Nakama: instanceId='{instanceId}'");
+
+            var prefsKey = $"nakama.deviceId.{instanceId}";
+            var deviceId = PlayerPrefs.GetString(prefsKey, "");
+
+            if (string.IsNullOrWhiteSpace(deviceId) || deviceId == SystemInfo.unsupportedIdentifier)
+            {
+                var baseId = SystemInfo.deviceUniqueIdentifier;
+                if (string.IsNullOrWhiteSpace(baseId) || baseId == SystemInfo.unsupportedIdentifier)
+                {
+                    baseId = Guid.NewGuid().ToString("N");
+                }
+
+                deviceId = $"{baseId}:{instanceId}";
+                PlayerPrefs.SetString(prefsKey, deviceId);
+                PlayerPrefs.Save();
+            }
+
+            return deviceId;
         }
 
         // ---------------------------------------------------------------------
@@ -482,13 +503,14 @@ namespace Server
                     return;
                 }
 
-                if (Client == null || Session == null)
+                if (Client == null || Session == null || Socket == null || !Socket.IsConnected)
                 {
                     Status = NetworkConnectionStatus.Disconnected;
+                    TriggerReconnect("heartbeat socket disconnected");
                     continue;
                 }
 
-                bool healthy = await RunHealthcheckAsync();
+                bool healthy = await RunHealthcheckOnMainThreadAsync(token);
                 Status = healthy
                     ? NetworkConnectionStatus.Connected
                     : NetworkConnectionStatus.Error;
@@ -537,15 +559,7 @@ namespace Server
                     return;
                 }
 
-                try
-                {
-                    await CloseConnectionAsync();
-                    await TryToConnectAsync();
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"Nakama: reconnect attempt failed: {ex}");
-                }
+                await RunReconnectAttemptOnMainThreadAsync();
 
                 if (Status == NetworkConnectionStatus.Connected)
                 {
@@ -553,6 +567,37 @@ namespace Server
                     return;
                 }
             }
+        }
+
+        private Task<bool> RunHealthcheckOnMainThreadAsync(CancellationToken token)
+        {
+            if (mainThreadContext == null || SynchronizationContext.Current == mainThreadContext)
+            {
+                return RunHealthcheckAsync();
+            }
+
+            var tcs = new TaskCompletionSource<bool>();
+            mainThreadContext.Post(async _ =>
+            {
+                if (token.IsCancellationRequested)
+                {
+                    tcs.TrySetCanceled();
+                    return;
+                }
+
+                try
+                {
+                    var healthy = await RunHealthcheckAsync();
+                    tcs.TrySetResult(healthy);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"Nakama: healthcheck failed: {ex}");
+                    tcs.TrySetResult(false);
+                }
+            }, null);
+
+            return tcs.Task;
         }
 
         private void StopReconnectLoop()
@@ -565,6 +610,68 @@ namespace Server
             reconnectCts.Cancel();
             reconnectCts.Dispose();
             reconnectCts = null;
+        }
+
+        private Task RunReconnectAttemptOnMainThreadAsync()
+        {
+            if (mainThreadContext == null || SynchronizationContext.Current == mainThreadContext)
+            {
+                return RunReconnectAttemptAsync();
+            }
+
+            var tcs = new TaskCompletionSource<bool>();
+            mainThreadContext.Post(async _ =>
+            {
+                try
+                {
+                    await RunReconnectAttemptAsync();
+                    tcs.TrySetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"Nakama: reconnect attempt failed: {ex}");
+                    tcs.TrySetResult(false);
+                }
+            }, null);
+
+            return tcs.Task;
+        }
+
+        private async Task RunReconnectAttemptAsync()
+        {
+            try
+            {
+                await CloseConnectionAsync();
+                await TryToConnectAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Nakama: reconnect attempt failed: {ex}");
+            }
+        }
+
+        private static string GetInstanceId()
+        {
+            // 1) command line: -nakamaInstance=2
+            var args = Environment.GetCommandLineArgs();
+            foreach (var a in args)
+            {
+                const string prefix = "-nakamaInstance=";
+                if (a.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    return a.Substring(prefix.Length);
+            }
+
+            // 2) env var: NAKAMA_INSTANCE=2
+            var env = Environment.GetEnvironmentVariable("NAKAMA_INSTANCE");
+            if (!string.IsNullOrEmpty(env))
+                return env;
+
+            // 3) editor fallback: differentiate Editor vs Player at least
+#if UNITY_EDITOR
+            return "editor";
+#else
+            return "player";
+#endif
         }
     }
 }

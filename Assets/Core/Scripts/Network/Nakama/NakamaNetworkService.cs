@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Nakama;
@@ -21,6 +22,7 @@ namespace Server
 
         private readonly NakamaConnection _connection;
         private Action<NetworkConnectionStatus> onNetworkStatusChanged;
+        private SynchronizationContext mainThreadContext;
         private ISocket socket;
         private bool handlersAttached;
         private bool matchmakingInProgress;
@@ -62,6 +64,7 @@ namespace Server
         public IEnumerator Initialize()
         {
             Debug.Log("NakamaNetworkService.Initialize() started");
+            mainThreadContext = SynchronizationContext.Current;
             // delegate boot sequence to the connection
             yield return _connection.Initialize();
             Debug.Log($"NakamaConnection.Initialize() completed. Status: {_connection.Status}");
@@ -168,6 +171,7 @@ namespace Server
             }
 
             matchmakingInProgress = true;
+            Debug.Log("NakamaNetworkService: sending matchmaker_add (2v2).");
             await socket.AddMatchmakerAsync("*", 2, 2);
         }
 
@@ -257,9 +261,22 @@ namespace Server
 
             try
             {
+                var userCount = 0;
+                if (matched.Users != null)
+                {
+                    foreach (var _ in matched.Users)
+                    {
+                        userCount++;
+                    }
+                }
+
+                Debug.Log(
+                    $"NakamaNetworkService: matchmaker matched, matchId={matched.MatchId}, users={userCount}"
+                );
                 var joined = await socket.JoinMatchAsync(matched.MatchId);
                 matchId = joined.Id;
                 matchmakingInProgress = false;
+                Debug.Log($"NakamaNetworkService: joined match {matchId}.");
 
                 string localUserId = _connection?.Session?.UserId;
                 string opponentUserId = null;
@@ -297,7 +314,7 @@ namespace Server
                     payload.scores[opponentUserId] = 0;
                 }
 
-                MatchReady?.Invoke(payload);
+                DispatchMatchReady(payload);
             }
             catch (Exception ex)
             {
@@ -316,6 +333,7 @@ namespace Server
             try
             {
                 string json = Encoding.UTF8.GetString(state.State);
+                Debug.Log($"NakamaNetworkService: match state opcode={state.OpCode}.");
 
                 if (state.OpCode == OpRoundResult)
                 {
@@ -333,7 +351,7 @@ namespace Server
                         scores = payload.scores,
                         nextRound = payload.nextRound,
                     };
-                    RoundResolved?.Invoke(result);
+                    DispatchRoundResolved(result);
                 }
                 else if (state.OpCode == OpMatchReady)
                 {
@@ -366,13 +384,35 @@ namespace Server
                         round = payload.round,
                         scores = payload.scores,
                     };
-                    MatchReady?.Invoke(ready);
+                    DispatchMatchReady(ready);
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogError($"NakamaNetworkService: match state parse error: {ex}");
             }
+        }
+
+        private void DispatchMatchReady(RpsMatchReadyPayload payload)
+        {
+            if (mainThreadContext == null || SynchronizationContext.Current == mainThreadContext)
+            {
+                MatchReady?.Invoke(payload);
+                return;
+            }
+
+            mainThreadContext.Post(_ => MatchReady?.Invoke(payload), null);
+        }
+
+        private void DispatchRoundResolved(RpsRoundResultPayload payload)
+        {
+            if (mainThreadContext == null || SynchronizationContext.Current == mainThreadContext)
+            {
+                RoundResolved?.Invoke(payload);
+                return;
+            }
+
+            mainThreadContext.Post(_ => RoundResolved?.Invoke(payload), null);
         }
 
         [Serializable]

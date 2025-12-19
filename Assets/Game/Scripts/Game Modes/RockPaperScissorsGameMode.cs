@@ -272,7 +272,10 @@ namespace Project
             matchmakingInProgress = false;
             view.DisplayResult("Match found!");
             view.SetActionButtonsVisible(true);
-            view.UpdateScores(GetScore(payload.scores, localUserId), GetScore(payload.scores, opponentUserId));
+            view.UpdateScores(
+                GetScore(payload.scores, localUserId),
+                GetScore(payload.scores, opponentUserId)
+            );
             view.UpdateRound(payload.round);
 
             if (!string.IsNullOrEmpty(payload.opponentUsername))
