@@ -168,10 +168,20 @@ namespace Project
             rockPaperScissorsMenuRef.connectionStatusText.text = status;
         }
 
+        public void UpdateOpponentName(string name)
+        {
+            rockPaperScissorsMenuRef.opponentNameText.text = name;
+        }
+
         public void UpdateScores(int playerScore, int opponentScore)
         {
             rockPaperScissorsMenuRef.playerScoreText.text = $"Player Score: {playerScore}";
             rockPaperScissorsMenuRef.opponentScoreText.text = $"Opponent Score: {opponentScore}";
+        }
+
+        public void UpdateRound(int round)
+        {
+            rockPaperScissorsMenuRef.roundNumberText.text = $"Round: {round}";
         }
 
         public void DisplayResult(string result)

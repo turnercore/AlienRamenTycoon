@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Core;
-using Nakama;
-using Newtonsoft.Json;
 using Server;
 using UnityEngine;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -13,23 +10,20 @@ namespace Project
 {
     public class RockPaperScissorsGameMode : IGameMode
     {
-        private const long OpPick = 1;
-        private const long OpRoundResult = 2;
-
         private readonly ApplicationData applicationData;
         private readonly MenuPrefabsContainer menuPrefabsContainer;
         private readonly AddressablesHandleHelper addressableHandles = new();
 
         private RockPaperScissorsView view;
         private INetworkService network => applicationData.Network;
+        private IRpsMatchService rpsMatchService;
         private bool initialized;
         private bool awaitingServerResult;
         private bool matchmakingInProgress;
         private bool isMatched;
-        private ISocket socket;
-        private Action<IMatchmakerMatched> matchmakerMatchedHandler;
-        private Action<IMatchState> matchStateHandler;
         private string matchId;
+        private string localUserId;
+        private string opponentUserId;
 
         public bool IsGameModeInitialized => initialized;
 
@@ -88,6 +82,7 @@ namespace Project
             }
             else
             {
+                rpsMatchService = network as IRpsMatchService;
                 network.OnNetworkStatusChanged += HandleNetworkStatusChanged;
                 // Update for current
                 HandleNetworkStatusChanged(network.Connection.Status);
@@ -100,12 +95,12 @@ namespace Project
             view.UpdateConnectionStatus(status.ToString());
             if (status == NetworkConnectionStatus.Connected)
             {
-                AttachSocketHandlers();
+                AttachMatchHandlers();
                 StartMatchmakingIfNeeded();
             }
             else
             {
-                DetachSocketHandlers();
+                DetachMatchHandlers();
             }
         }
 
@@ -144,8 +139,7 @@ namespace Project
 
             try
             {
-                ISocket activeSocket = GetSocket();
-                if (activeSocket == null)
+                if (rpsMatchService == null)
                 {
                     view.DisplayResult("Not connected.");
                     view.SetActionButtonsVisible(true);
@@ -153,13 +147,7 @@ namespace Project
                     return;
                 }
 
-                var payload = new RpsActionRequest
-                {
-                    action = action.ToString().ToLowerInvariant(),
-                };
-                string json = JsonConvert.SerializeObject(payload);
-                byte[] data = Encoding.UTF8.GetBytes(json);
-                await activeSocket.SendMatchStateAsync(matchId, OpPick, data);
+                await rpsMatchService.SendPickAsync(action.ToString().ToLowerInvariant());
             }
             catch (Exception ex)
             {
@@ -182,9 +170,9 @@ namespace Project
 
         private async Task StartMatchmakingAsync()
         {
-            ISocket activeSocket = GetSocket();
-            if (activeSocket == null)
+            if (rpsMatchService == null)
             {
+                view.DisplayResult("Matchmaking unavailable.");
                 return;
             }
 
@@ -193,7 +181,7 @@ namespace Project
 
             try
             {
-                await activeSocket.AddMatchmakerAsync("*", 2, 2);
+                await rpsMatchService.MatchmakeAsync();
             }
             catch (Exception ex)
             {
@@ -227,13 +215,15 @@ namespace Project
             {
                 network.OnNetworkStatusChanged -= HandleNetworkStatusChanged;
             }
-            DetachSocketHandlers();
+            DetachMatchHandlers();
 
             initialized = false;
             awaitingServerResult = false;
             matchmakingInProgress = false;
             isMatched = false;
             matchId = null;
+            localUserId = null;
+            opponentUserId = null;
             addressableHandles.ReleaseAll();
         }
 
@@ -243,111 +233,71 @@ namespace Project
             addressableHandles.Dispose();
         }
 
-        private void AttachSocketHandlers()
+        private void AttachMatchHandlers()
         {
-            ISocket socket = GetSocket();
-            if (socket == null || socket == this.socket)
+            if (rpsMatchService == null)
             {
                 return;
             }
 
-            DetachSocketHandlers();
-            this.socket = socket;
-            matchmakerMatchedHandler = OnMatchmakerMatched;
-            matchStateHandler = OnMatchStateReceived;
-            this.socket.ReceivedMatchmakerMatched += matchmakerMatchedHandler;
-            this.socket.ReceivedMatchState += matchStateHandler;
+            DetachMatchHandlers();
+            rpsMatchService.MatchReady += OnMatchReady;
+            rpsMatchService.RoundResolved += OnRoundResolved;
         }
 
-        private void DetachSocketHandlers()
+        private void DetachMatchHandlers()
         {
-            if (socket == null)
+            if (rpsMatchService == null)
             {
                 return;
             }
 
-            if (matchmakerMatchedHandler != null)
-            {
-                socket.ReceivedMatchmakerMatched -= matchmakerMatchedHandler;
-            }
-
-            if (matchStateHandler != null)
-            {
-                socket.ReceivedMatchState -= matchStateHandler;
-            }
-
-            socket = null;
-            matchmakerMatchedHandler = null;
-            matchStateHandler = null;
+            rpsMatchService.MatchReady -= OnMatchReady;
+            rpsMatchService.RoundResolved -= OnRoundResolved;
         }
 
-        private ISocket GetSocket()
+        private void OnMatchReady(RpsMatchReadyPayload payload)
         {
-            if (
-                network is NakamaNetworkService nakamaService
-                && nakamaService.Connection is NakamaConnection nakamaConnection
-            )
-            {
-                return nakamaConnection.Socket;
-            }
-
-            return null;
-        }
-
-        private async void OnMatchmakerMatched(IMatchmakerMatched matched)
-        {
-            if (matched == null || socket == null)
+            if (payload == null)
             {
                 return;
             }
 
-            try
+            matchId = payload.matchId;
+            localUserId = !string.IsNullOrEmpty(payload.localUserId)
+                ? payload.localUserId
+                : GetLocalUserId();
+            opponentUserId = payload.opponentUserId;
+            isMatched = !string.IsNullOrEmpty(matchId);
+            matchmakingInProgress = false;
+            view.DisplayResult("Match found!");
+            view.SetActionButtonsVisible(true);
+            view.UpdateScores(GetScore(payload.scores, localUserId), GetScore(payload.scores, opponentUserId));
+            view.UpdateRound(payload.round);
+
+            if (!string.IsNullOrEmpty(payload.opponentUsername))
             {
-                var joined = await socket.JoinMatchAsync(matched.MatchId);
-                matchId = joined.Id;
-                isMatched = true;
-                matchmakingInProgress = false;
-                view.DisplayResult("Match found!");
-                view.SetActionButtonsVisible(true);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"RPS join match exception: {ex}");
-                view.DisplayResult("Match join failed.");
-                matchmakingInProgress = false;
+                view.UpdateOpponentName(payload.opponentUsername);
             }
         }
 
-        private void OnMatchStateReceived(IMatchState state)
+        private void OnRoundResolved(RpsRoundResultPayload payload)
         {
-            if (state == null || state.OpCode != OpRoundResult)
+            if (payload == null)
             {
                 return;
             }
 
-            try
+            var lastRound = new RpsRoundResult
             {
-                string json = Encoding.UTF8.GetString(state.State);
-                var payload = JsonConvert.DeserializeObject<RpsMatchResult>(json);
-                if (payload == null)
-                {
-                    return;
-                }
-
-                var lastRound = new RpsRoundResult
-                {
-                    round = payload.round,
-                    picks = payload.picks,
-                    winnerUserId = payload.winnerUserId,
-                };
-                ApplyResolvedRound(lastRound, payload.scores);
-                view.SetActionButtonsVisible(true);
-                awaitingServerResult = false;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"RPS match state parse error: {ex}");
-            }
+                round = payload.round,
+                picks = payload.picks,
+                winnerUserId = payload.winnerUserId,
+            };
+            view.UpdateRound(payload.round);
+            ApplyResolvedRound(lastRound, payload.scores);
+            view.SetActionButtonsVisible(true);
+            awaitingServerResult = false;
         }
 
         private void ApplyResolvedRound(RpsRoundResult lastRound, Dictionary<string, int> scores)
@@ -418,32 +368,22 @@ namespace Project
 
         private string GetLocalUserId()
         {
-            if (
-                network is NakamaNetworkService nakamaService
-                && nakamaService.Connection is NakamaConnection nakamaConnection
-                && nakamaConnection.Session != null
-            )
+            if (!string.IsNullOrEmpty(localUserId))
             {
-                return nakamaConnection.Session.UserId;
+                return localUserId;
             }
 
-            return null;
+            return rpsMatchService?.LocalUserId;
         }
 
-        [Serializable]
-        private class RpsActionRequest
+        private static int GetScore(Dictionary<string, int> scores, string userId)
         {
-            public string action;
-        }
+            if (scores == null || string.IsNullOrEmpty(userId))
+            {
+                return 0;
+            }
 
-        [Serializable]
-        private class RpsMatchResult
-        {
-            public int round;
-            public Dictionary<string, int> scores;
-            public int nextRound;
-            public Dictionary<string, string> picks;
-            public string winnerUserId;
+            return scores.TryGetValue(userId, out int value) ? value : 0;
         }
 
         [Serializable]

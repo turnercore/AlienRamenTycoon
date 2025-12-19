@@ -17,5 +17,6 @@ namespace Project
         public TextMeshProUGUI playerScoreText;
         public TextMeshProUGUI opponentScoreText;
         public TextMeshProUGUI connectionStatusText;
+        public TextMeshProUGUI roundNumberText;
     }
 }
