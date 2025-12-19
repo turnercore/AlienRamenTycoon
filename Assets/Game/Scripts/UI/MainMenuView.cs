@@ -19,6 +19,7 @@ namespace Project
         private readonly AddressablesHandleHelper handles = new();
         private bool isOptionsMenuOpen = false;
         private readonly OptionsData optionsData;
+        private readonly GameMode gameModeOnStart;
         private UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject> optionsHandle;
 
         public MainMenuView(
@@ -26,7 +27,8 @@ namespace Project
             MenuApplicationStateData menuApplicationStateData,
             UnityEngine.AddressableAssets.AssetReferenceT<GameObject> optionsMenuPrefabReference,
             ApplicationData applicationData,
-            OptionsData optionsData
+            OptionsData optionsData,
+            GameMode gameModeOnStart
         )
         {
             this.mainMenuReference = mainMenuReference;
@@ -34,6 +36,7 @@ namespace Project
             this.optionsMenuPrefabReference = optionsMenuPrefabReference;
             this.applicationData = applicationData;
             this.optionsData = optionsData;
+            this.gameModeOnStart = gameModeOnStart;
 
             // go ahead and async load the options menu prefab from addressables
             optionsHandle = handles.LoadAssetAsync<GameObject>(
@@ -79,7 +82,7 @@ namespace Project
 
         private void OnStartClicked()
         {
-            Debug.Log("Start button clicked - starting game...");
+            menuApplicationStateData.startGameRequests?.Invoke(gameModeOnStart);
         }
 
         private void OnOptionsClicked()

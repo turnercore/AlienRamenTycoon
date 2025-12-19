@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Project.MainMenuBootSettings
   menuPrefabsContainer: {fileID: 11400000, guid: 411ca5ac3622f644e9de81c7e3404c6c, type: 2}
   gameModeSettings: {fileID: 11400000, guid: 77b115bd19d5fb9419153b3b97bfcb62, type: 2}
+  gameModeOnStart: 3

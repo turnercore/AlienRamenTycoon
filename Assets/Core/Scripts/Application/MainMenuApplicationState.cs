@@ -24,19 +24,22 @@ namespace Project
         private Action<GameMode> startGameHandler;
         private MainMenuView mainMenuView;
         private MainMenuReference mainMenuReference;
+        private readonly GameMode gameModeOnStart;
         public bool IsApplicationStateInitialized { get; set; } = true;
 
         public MainMenuApplicationState(
             ApplicationData applicationData,
             MenuApplicationStateData menuApplicationStateData,
             MainMenuBootSettings mainMenuBootSettings,
-            OptionsData optionsData
+            OptionsData optionsData,
+            GameMode gameModeOnStart
         )
         {
             this.applicationData = applicationData;
             this.menuApplicationStateData = menuApplicationStateData;
             this.mainMenuBootSettings = mainMenuBootSettings;
             this.optionsData = optionsData;
+            this.gameModeOnStart = gameModeOnStart;
         }
 
         public void EnterApplicationState()
@@ -81,7 +84,8 @@ namespace Project
                     .menuPrefabsContainer
                     .optionsMenuReference,
                 applicationData,
-                optionsData: optionsData
+                optionsData,
+                gameModeOnStart
             );
             mainMenuView.Initialize();
         }

@@ -10,9 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ed6588686c83ac949a8bf8760b0a0710, type: 3}
-  m_Name: RockPaperScissorsGameModeSettings
+  m_Name: DefaultGameModeSettings
   m_EditorClassIdentifier: Assembly-CSharp::GameModeSettings
   gameModeData:
+  - gameMode: 1
+    scene:
+      m_AssetGUID: 62526c2d61d0d8243a04484d2464a93d
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - gameMode: 2
+    scene:
+      m_AssetGUID: a453071be3f88bf499649752c43af3a7
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
   - gameMode: 3
     scene:
       m_AssetGUID: d743a2ca431ad2c468e366315e67a4be

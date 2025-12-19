@@ -282,7 +282,8 @@ namespace Core
                     applicationData,
                     menuApplicationStateData,
                     mainMenuBootSettings,
-                    optionsData
+                    optionsData,
+                    mainMenuBootSettings.gameModeOnStart
                 ),
                 [ApplicationState.GameMode] = new GameModeApplicationState(
                     applicationData,

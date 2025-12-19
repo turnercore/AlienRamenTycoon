@@ -7,5 +7,8 @@ namespace Project
         menuName = "Project/Settings/BootSettings/MainMenuBootSettings",
         fileName = "MainMenuBootSettings"
     )]
-    public class MainMenuBootSettings : BootSettings { }
+    public class MainMenuBootSettings : BootSettings
+    {
+        public GameMode gameModeOnStart = GameMode.Invalid;
+    }
 }
