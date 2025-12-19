@@ -168,6 +168,29 @@ namespace Project
             rockPaperScissorsMenuRef.connectionStatusText.text = status;
         }
 
+        public void UpdateScores(int playerScore, int opponentScore)
+        {
+            rockPaperScissorsMenuRef.playerScoreText.text = $"Player Score: {playerScore}";
+            rockPaperScissorsMenuRef.opponentScoreText.text = $"Opponent Score: {opponentScore}";
+        }
+
+        public void DisplayResult(string result)
+        {
+            rockPaperScissorsMenuRef.resultText.text = result;
+        }
+
+        public void SetActionButtonsVisible(bool isVisible)
+        {
+            rockPaperScissorsMenuRef.button1.gameObject.SetActive(isVisible);
+            rockPaperScissorsMenuRef.button2.gameObject.SetActive(isVisible);
+            rockPaperScissorsMenuRef.button3.gameObject.SetActive(isVisible);
+        }
+
+        public void ShowWaitingForOpponent()
+        {
+            DisplayResult("Waiting for opponent...");
+        }
+
         private void UpdateButtonText(BasicTMPButton button, string text)
         {
             button.TMPText.text = text;
