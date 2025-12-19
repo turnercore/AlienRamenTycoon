@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: UI
   m_GUID: c177604d30ac27d4b9598b5d3e0cee7a
   m_SerializeEntries:
+  - m_GUID: 340233c7f1585924e847f0527a884967
+    m_Address: Assets/Game/Prefabs/UI/Menus/RPSGameMode.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 519ee1931e69fb5458418a5912928d91
     m_Address: MainMenuScreen.prefab
     m_ReadOnly: 0

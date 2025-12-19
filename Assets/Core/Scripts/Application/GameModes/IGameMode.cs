@@ -5,6 +5,7 @@
         Invalid,
         Spaceship,
         Tycoon,
+        RockPaperScissors,
     }
 
     /// <summary>

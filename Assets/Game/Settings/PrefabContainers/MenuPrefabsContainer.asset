@@ -30,3 +30,9 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  rockPaperScissorsMenuReference:
+    m_AssetGUID: 340233c7f1585924e847f0527a884967
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0

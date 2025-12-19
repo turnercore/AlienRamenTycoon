@@ -1,0 +1,202 @@
+// View for the Rock Paper Scissors Game, this class handles the UI elements and user interactions.
+// Will track connection status, if connected to the game, send actions, wait for results, and update scores.
+using System;
+using System.Collections.Generic;
+using Core;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace Project
+{
+    public class RockPaperScissorsView : IApplicationLifecycle
+    {
+        private readonly MenuApplicationStateData menuApplicationStateData;
+        private readonly GameObject rockPaperScissorsMenuPrefab;
+        private RockPaperScissorsMenuRef rockPaperScissorsMenuRef;
+        private readonly ApplicationData applicationData;
+
+        // map of which button corresponds to which action
+        private readonly Dictionary<Button, RockPaperScissorsAction> buttonActionMap;
+
+        public RockPaperScissorsView(
+            GameObject rockPaperScissorsMenuPrefab,
+            MenuApplicationStateData menuApplicationStateData,
+            ApplicationData applicationData
+        ) { }
+
+        private enum RockPaperScissorsAction
+        {
+            Rock,
+            Paper,
+            Scissors,
+        }
+
+        public void Initialize()
+        {
+            rockPaperScissorsMenuRef = GameObject
+                .Instantiate(rockPaperScissorsMenuPrefab)
+                .GetComponent<RockPaperScissorsMenuRef>();
+            AddListeners();
+            RandomizeButtons();
+        }
+
+        private void AddListeners()
+        {
+            // Add listeners for the buttons in the menu reference
+            rockPaperScissorsMenuRef.button1.onClick.AddListener(OnButton1Clicked);
+            rockPaperScissorsMenuRef.button2.onClick.AddListener(OnButton2Clicked);
+            rockPaperScissorsMenuRef.button3.onClick.AddListener(OnButton3Clicked);
+            rockPaperScissorsMenuRef.quitButton.onClick.AddListener(OnQuitClicked);
+        }
+
+        private void OnQuitClicked()
+        {
+            // Quit clicked, we need to transition to application closed state
+            applicationData.ChangeApplicationState(ApplicationState.Exit);
+            Dispose();
+        }
+
+        public void Tick() { }
+
+        public void Dispose()
+        // cleanup self, listeners, and dispose any children that need to be disposed.
+        {
+            if (rockPaperScissorsMenuRef != null)
+            {
+                rockPaperScissorsMenuRef.button1.onClick.RemoveListener(OnButton1Clicked);
+                rockPaperScissorsMenuRef.button2.onClick.RemoveListener(OnButton2Clicked);
+                rockPaperScissorsMenuRef.button3.onClick.RemoveListener(OnButton3Clicked);
+                rockPaperScissorsMenuRef.quitButton.onClick.RemoveListener(OnQuitClicked);
+                GameObject.Destroy(rockPaperScissorsMenuRef.gameObject);
+                rockPaperScissorsMenuRef = null;
+            }
+        }
+
+        private void OnButton3Clicked()
+        {
+            // Make sure the button is mapped
+            if (!buttonActionMap.ContainsKey(rockPaperScissorsMenuRef.button3))
+            {
+                Debug.LogError("Button 3 not mapped to an action!");
+                return;
+            }
+
+            // For now, output in log which action they picked:
+            Debug.Log(
+                "Button 3 clicked - action: " + buttonActionMap[rockPaperScissorsMenuRef.button3]
+            );
+            SubmitAction(buttonActionMap[rockPaperScissorsMenuRef.button3]);
+        }
+
+        private void OnButton1Clicked()
+        {
+            //Make sure the button is mapped
+            if (!buttonActionMap.ContainsKey(rockPaperScissorsMenuRef.button2))
+            {
+                Debug.LogError("Button 2 not mapped to an action!");
+                return;
+            }
+
+            Debug.Log(
+                "Button 2 clicked - action: " + buttonActionMap[rockPaperScissorsMenuRef.button2]
+            );
+            SubmitAction(buttonActionMap[rockPaperScissorsMenuRef.button2]);
+        }
+
+        private void OnButton2Clicked()
+        {
+            //Make sure the button is mapped
+            if (!buttonActionMap.ContainsKey(rockPaperScissorsMenuRef.button1))
+            {
+                Debug.LogError("Button 1 not mapped to an action!");
+                return;
+            }
+
+            Debug.Log(
+                "Button 1 clicked - action: " + buttonActionMap[rockPaperScissorsMenuRef.button1]
+            );
+            SubmitAction(buttonActionMap[rockPaperScissorsMenuRef.button1]);
+        }
+
+        private void RandomizeButtons()
+        {
+            List<RockPaperScissorsAction> actions = new List<RockPaperScissorsAction>
+            {
+                RockPaperScissorsAction.Rock,
+                RockPaperScissorsAction.Paper,
+                RockPaperScissorsAction.Scissors,
+            };
+
+            System.Random rand = new System.Random();
+            int n = actions.Count;
+            while (n > 1)
+            {
+                int k = rand.Next(n--);
+                RockPaperScissorsAction temp = actions[n];
+                actions[n] = actions[k];
+                actions[k] = temp;
+            }
+
+            // Update button texts and mappings
+            UpdateButtonText(rockPaperScissorsMenuRef.button1, actions[0].ToString());
+            UpdateButtonMappings(rockPaperScissorsMenuRef.button1, actions[0]);
+            UpdateButtonText(rockPaperScissorsMenuRef.button2, actions[1].ToString());
+            UpdateButtonMappings(rockPaperScissorsMenuRef.button2, actions[1]);
+            UpdateButtonText(rockPaperScissorsMenuRef.button3, actions[2].ToString());
+            UpdateButtonMappings(rockPaperScissorsMenuRef.button3, actions[2]);
+        }
+
+        private void UpdateButtonMappings(BasicTMPButton button, RockPaperScissorsAction action)
+        {
+            if (buttonActionMap.ContainsKey(button))
+            {
+                buttonActionMap[button] = action;
+            }
+            else
+            {
+                buttonActionMap.Add(button, action);
+            }
+        }
+
+        private void UpdateConnectionStatus(string status)
+        {
+            rockPaperScissorsMenuRef.connectionStatusText.text = status;
+        }
+
+        private void UpdateScores(int playerScore, int opponentScore)
+        {
+            rockPaperScissorsMenuRef.playerScoreText.text = $"Player Score: {playerScore}";
+            rockPaperScissorsMenuRef.opponentScoreText.text = $"Opponent Score: {opponentScore}";
+        }
+
+        private void DisplayResult(string result)
+        {
+            rockPaperScissorsMenuRef.resultText.text = result;
+        }
+
+        private void UpdateButtonText(BasicTMPButton button, string text)
+        {
+            button.textMeshPro.text = text;
+        }
+
+        // Submit Action to Server
+        private void SubmitAction(RockPaperScissorsAction action)
+        {
+            // Placeholder for submitting action to server logic
+            Debug.Log("Submitting action to server: " + action);
+        }
+
+        private void HandleServerResponse(string response)
+        {
+            // Placeholder for handling server response logic
+            Debug.Log("Received server response: " + response);
+        }
+
+        private void UpdateUIAfterRound(string result, int playerScore, int opponentScore)
+        {
+            DisplayResult(result);
+            UpdateScores(playerScore, opponentScore);
+            RandomizeButtons();
+        }
+    }
+}
