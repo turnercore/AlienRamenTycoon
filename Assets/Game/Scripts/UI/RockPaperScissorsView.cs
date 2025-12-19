@@ -14,7 +14,7 @@ namespace Project
         private RockPaperScissorsMenuRef rockPaperScissorsMenuRef;
 
         // map of which button corresponds to which action
-        private readonly Dictionary<Button, RockPaperScissorsAction> buttonActionMap;
+        private readonly Dictionary<BasicTMPButton, RockPaperScissorsAction> buttonActionMap;
         public event Action OnQuitRequested;
         public event Action<RockPaperScissorsAction> OnActionSubmitted;
         public bool initalized;
@@ -22,7 +22,7 @@ namespace Project
         public RockPaperScissorsView(GameObject rockPaperScissorsMenuPrefab)
         {
             this.rockPaperScissorsMenuPrefab = rockPaperScissorsMenuPrefab;
-            buttonActionMap = new Dictionary<Button, RockPaperScissorsAction>();
+            buttonActionMap = new Dictionary<BasicTMPButton, RockPaperScissorsAction>();
         }
 
         public enum RockPaperScissorsAction
@@ -42,16 +42,17 @@ namespace Project
                 .GetComponent<RockPaperScissorsMenuRef>();
             AddListeners();
             RandomizeButtons();
+
             initalized = true;
         }
 
         private void AddListeners()
         {
             // Add listeners for the buttons in the menu reference
-            rockPaperScissorsMenuRef.button1.onClick.AddListener(OnButton1Clicked);
-            rockPaperScissorsMenuRef.button2.onClick.AddListener(OnButton2Clicked);
-            rockPaperScissorsMenuRef.button3.onClick.AddListener(OnButton3Clicked);
-            rockPaperScissorsMenuRef.quitButton.onClick.AddListener(OnQuitClicked);
+            rockPaperScissorsMenuRef.button1.Button.onClick.AddListener(OnButton1Clicked);
+            rockPaperScissorsMenuRef.button2.Button.onClick.AddListener(OnButton2Clicked);
+            rockPaperScissorsMenuRef.button3.Button.onClick.AddListener(OnButton3Clicked);
+            rockPaperScissorsMenuRef.quitButton.Button.onClick.AddListener(OnQuitClicked);
         }
 
         private void OnQuitClicked()
@@ -67,10 +68,10 @@ namespace Project
         {
             if (rockPaperScissorsMenuRef != null)
             {
-                rockPaperScissorsMenuRef.button1.onClick.RemoveListener(OnButton1Clicked);
-                rockPaperScissorsMenuRef.button2.onClick.RemoveListener(OnButton2Clicked);
-                rockPaperScissorsMenuRef.button3.onClick.RemoveListener(OnButton3Clicked);
-                rockPaperScissorsMenuRef.quitButton.onClick.RemoveListener(OnQuitClicked);
+                rockPaperScissorsMenuRef.button1.Button.onClick.RemoveListener(OnButton1Clicked);
+                rockPaperScissorsMenuRef.button2.Button.onClick.RemoveListener(OnButton2Clicked);
+                rockPaperScissorsMenuRef.button3.Button.onClick.RemoveListener(OnButton3Clicked);
+                rockPaperScissorsMenuRef.quitButton.Button.onClick.RemoveListener(OnQuitClicked);
                 GameObject.Destroy(rockPaperScissorsMenuRef.gameObject);
                 rockPaperScissorsMenuRef = null;
             }
@@ -150,15 +151,15 @@ namespace Project
             UpdateButtonMappings(rockPaperScissorsMenuRef.button3, actions[2]);
         }
 
-        private void UpdateButtonMappings(BasicTMPButton button, RockPaperScissorsAction action)
+        private void UpdateButtonMappings(BasicTMPButton tmpButton, RockPaperScissorsAction action)
         {
-            if (buttonActionMap.ContainsKey(button))
+            if (buttonActionMap.ContainsKey(tmpButton))
             {
-                buttonActionMap[button] = action;
+                buttonActionMap[tmpButton] = action;
             }
             else
             {
-                buttonActionMap.Add(button, action);
+                buttonActionMap.Add(tmpButton, action);
             }
         }
 
@@ -167,20 +168,9 @@ namespace Project
             rockPaperScissorsMenuRef.connectionStatusText.text = status;
         }
 
-        private void UpdateScores(int playerScore, int opponentScore)
-        {
-            rockPaperScissorsMenuRef.playerScoreText.text = $"Player Score: {playerScore}";
-            rockPaperScissorsMenuRef.opponentScoreText.text = $"Opponent Score: {opponentScore}";
-        }
-
-        private void DisplayResult(string result)
-        {
-            rockPaperScissorsMenuRef.resultText.text = result;
-        }
-
         private void UpdateButtonText(BasicTMPButton button, string text)
         {
-            button.textMeshPro.text = text;
+            button.TMPText.text = text;
         }
 
         // Submit Action to Server
@@ -189,19 +179,6 @@ namespace Project
             // Placeholder for submitting action to server logic
             Debug.Log("Submitting action to server: " + action);
             OnActionSubmitted?.Invoke(action);
-        }
-
-        private void HandleServerResponse(string response)
-        {
-            // Placeholder for handling server response logic
-            Debug.Log("Received server response: " + response);
-        }
-
-        private void UpdateUIAfterRound(string result, int playerScore, int opponentScore)
-        {
-            DisplayResult(result);
-            UpdateScores(playerScore, opponentScore);
-            RandomizeButtons();
         }
     }
 }

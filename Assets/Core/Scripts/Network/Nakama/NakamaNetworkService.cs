@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Threading.Tasks;
 using Core;
@@ -13,10 +14,32 @@ namespace Server
         public NetworkConnectionStatus Status => _connection.Status;
 
         private readonly NakamaConnection _connection;
+        private Action<NetworkConnectionStatus> onNetworkStatusChanged;
+        private float pollSocketInterval = 0.1f;
 
         public NakamaNetworkService(NakamaConnection connection)
         {
             _connection = connection;
+        }
+
+        public Action<NetworkConnectionStatus> OnNetworkStatusChanged
+        {
+            get => onNetworkStatusChanged;
+            set
+            {
+                if (onNetworkStatusChanged != null)
+                {
+                    _connection.OnStatusChanged -= onNetworkStatusChanged;
+                }
+
+                onNetworkStatusChanged = value;
+
+                if (onNetworkStatusChanged != null)
+                {
+                    _connection.OnStatusChanged += onNetworkStatusChanged;
+                    onNetworkStatusChanged.Invoke(_connection.Status);
+                }
+            }
         }
 
         public IEnumerator Initialize()
@@ -95,6 +118,11 @@ namespace Server
 
         public void Dispose()
         {
+            if (onNetworkStatusChanged != null)
+            {
+                _connection.OnStatusChanged -= onNetworkStatusChanged;
+                onNetworkStatusChanged = null;
+            }
             _connection?.Dispose();
         }
 

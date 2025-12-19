@@ -14,7 +14,23 @@ namespace Server
 {
     public class NakamaConnection : INetworkConnection
     {
-        public NetworkConnectionStatus Status { get; private set; }
+        private NetworkConnectionStatus status;
+        public Action<NetworkConnectionStatus> OnStatusChanged { get; set; }
+
+        public NetworkConnectionStatus Status
+        {
+            get => status;
+            private set
+            {
+                if (status == value)
+                {
+                    return;
+                }
+
+                status = value;
+                OnStatusChanged?.Invoke(status);
+            }
+        }
 
         private NakamaSettings settings;
         private readonly AddressablesHandleHelper handles = new();
@@ -36,6 +52,7 @@ namespace Server
             CloseConnectionAsync()
                 .Forget(ex => Debug.LogError($"Nakama: error during Dispose: {ex}"));
             errorCodes = null;
+            OnStatusChanged = null;
         }
 
         private async Task CloseConnectionAsync()
@@ -242,6 +259,10 @@ namespace Server
             {
                 bool useMainThread = settings.UseMainThreadSocket;
                 Socket = Client.NewSocket(useMainThread: useMainThread);
+                // wire socket lifecycle
+                Socket.Connected += () => Status = NetworkConnectionStatus.Connected;
+                Socket.Closed += _ => Status = NetworkConnectionStatus.Disconnected;
+                Socket.ReceivedError += ex => Status = NetworkConnectionStatus.Error;
 
                 bool appearOnline = true;
                 int connectTimeout =

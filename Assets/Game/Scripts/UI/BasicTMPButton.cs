@@ -4,8 +4,15 @@ using UnityEngine.UI;
 
 namespace Project
 {
-    public class BasicTMPButton : Button
+    [RequireComponent(typeof(Button))]
+    public class BasicTMPButton : MonoBehaviour
     {
-        public TextMeshProUGUI textMeshPro;
+        public TextMeshProUGUI TMPText;
+        public Button Button { get; private set; }
+
+        private void Awake()
+        {
+            Button = GetComponent<Button>();
+        }
     }
 }

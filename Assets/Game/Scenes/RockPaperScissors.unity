@@ -414,8 +414,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60e2c86c0d7393b41af0acc4865cb557, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Core.SceneReference
-  applicationState: 0
-  gameMode: 0
+  applicationState: 4
+  gameMode: 3
 --- !u!4 &1932143546
 Transform:
   m_ObjectHideFlags: 0

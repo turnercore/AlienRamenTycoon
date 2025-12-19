@@ -9,8 +9,24 @@ namespace Server
 {
     public class OfflineNetworkConnection : INetworkConnection
     {
-        public NetworkConnectionStatus Status { get; private set; } =
-            NetworkConnectionStatus.Disconnected;
+        private NetworkConnectionStatus status = NetworkConnectionStatus.Disconnected;
+
+        public Action<NetworkConnectionStatus> OnStatusChanged { get; set; }
+
+        public NetworkConnectionStatus Status
+        {
+            get => status;
+            private set
+            {
+                if (status == value)
+                {
+                    return;
+                }
+
+                status = value;
+                OnStatusChanged?.Invoke(status);
+            }
+        }
 
         public IEnumerator Initialize()
         {
@@ -19,6 +35,10 @@ namespace Server
             yield break;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            Status = NetworkConnectionStatus.Disconnected;
+            OnStatusChanged = null;
+        }
     }
 }

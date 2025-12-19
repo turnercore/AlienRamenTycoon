@@ -107,7 +107,7 @@ namespace Core
                 yield break;
             }
 
-            StartCoroutine(SetUpNetworking());
+            yield return SetUpNetworking();
 
             yield return CreatePlatformFactory();
 
@@ -193,7 +193,7 @@ namespace Core
             optionsData.OfflineModeChanged += offlineHandler;
 
             Debug.Log($"NetworkService created: {(networkService != null ? "not null" : "null")}");
-            StartCoroutine(InitializeNetworkService(networkService));
+            yield return InitializeNetworkService(networkService);
         }
 
         private IEnumerator InitializeNetworkService(INetworkService networkService)

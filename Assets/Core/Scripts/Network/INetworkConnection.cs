@@ -15,6 +15,7 @@ namespace Server
 
     public interface INetworkConnection : IDisposable
     {
+        Action<NetworkConnectionStatus> OnStatusChanged { get; set; }
         NetworkConnectionStatus Status { get; }
 
         /// <summary>

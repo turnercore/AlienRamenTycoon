@@ -46,6 +46,8 @@ namespace Project
                 menuPrefabsContainer.rockPaperScissorsMenuReference,
                 OnPrefabLoaded
             );
+
+            Debug.Log("RockPaperScissorsGameMode: Entered Game Mode.");
         }
 
         private void OnPrefabLoaded(AsyncOperationHandle<GameObject> handle)
@@ -70,7 +72,6 @@ namespace Project
             else
             {
                 network.OnNetworkStatusChanged += HandleNetworkStatusChanged;
-
                 // Update for current
                 HandleNetworkStatusChanged(network.Connection.Status);
             }

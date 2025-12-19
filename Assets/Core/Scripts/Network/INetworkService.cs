@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Threading.Tasks;
 using Core;
-using UnityEditor.PackageManager;
 
 namespace Server
 {
@@ -18,7 +17,7 @@ namespace Server
         IEnumerator Initialize();
 
         /// <summary>
-        /// Convenience status – usually just proxies Connection.Status.
+        /// Convenience status - usually just proxies Connection.Status.
         /// </summary>
         NetworkConnectionStatus Status { get; }
 
