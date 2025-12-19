@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Net.WebSockets;
+using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Nakama;
@@ -12,9 +14,24 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Server
 {
-    public class NakamaConnection : INetworkConnection
+    public class NakamaConnection : INetworkConnection, IDisposable
     {
+        private static readonly int[] reconnectDelaysMs = new[]
+        {
+            200,
+            500,
+            1000,
+            1500,
+            2000,
+            5000,
+            10000,
+            30000,
+            60000,
+            120000,
+        };
+
         private NetworkConnectionStatus status;
+        private SynchronizationContext mainThreadContext;
         public Action<NetworkConnectionStatus> OnStatusChanged { get; set; }
 
         public NetworkConnectionStatus Status
@@ -28,18 +45,25 @@ namespace Server
                 }
 
                 status = value;
-                OnStatusChanged?.Invoke(status);
+                Debug.Log($"Nakama: status changed -> {status}");
+                DispatchStatusChanged(status);
             }
         }
 
         private NakamaSettings settings;
         private readonly AddressablesHandleHelper handles = new();
+        private CancellationTokenSource heartbeatCts;
+        private CancellationTokenSource reconnectCts;
 
         public IClient Client { get; private set; }
         public ISession Session { get; private set; }
         public ISocket Socket { get; private set; }
 
         public string[] errorCodes;
+
+        private Action socketConnectedHandler;
+        private Action<string> socketClosedHandler;
+        private Action<Exception> socketErrorHandler;
 
         private const string HealthcheckRpcId = "healthcheck";
         private readonly string _settingsAddress = "Assets/Game/Settings/NakamaSettings.asset";
@@ -49,6 +73,8 @@ namespace Server
         public void Dispose()
         {
             handles.Dispose();
+            StopHeartbeat();
+            StopReconnectLoop();
             CloseConnectionAsync()
                 .Forget(ex => Debug.LogError($"Nakama: error during Dispose: {ex}"));
             errorCodes = null;
@@ -57,6 +83,26 @@ namespace Server
 
         private async Task CloseConnectionAsync()
         {
+            StopHeartbeat();
+            StopReconnectLoop();
+            if (Socket != null)
+            {
+                if (socketConnectedHandler != null)
+                {
+                    Socket.Connected -= socketConnectedHandler;
+                }
+
+                if (socketClosedHandler != null)
+                {
+                    Socket.Closed -= socketClosedHandler;
+                }
+
+                if (socketErrorHandler != null)
+                {
+                    Socket.ReceivedError -= socketErrorHandler;
+                }
+            }
+
             if (Socket != null && Socket.IsConnected)
             {
                 try
@@ -83,6 +129,7 @@ namespace Server
         // ---------------------------------------------------------------------
         public IEnumerator Initialize()
         {
+            mainThreadContext = SynchronizationContext.Current;
             Debug.Log("NakamaConnection.Initialize() started");
 
             // Load settings via Addressables
@@ -126,6 +173,17 @@ namespace Server
             }
 
             Debug.Log($"NakamaConnection.Initialize() completed. Final status: {Status}");
+        }
+
+        private void DispatchStatusChanged(NetworkConnectionStatus currentStatus)
+        {
+            if (mainThreadContext == null)
+            {
+                OnStatusChanged?.Invoke(currentStatus);
+                return;
+            }
+
+            mainThreadContext.Post(_ => OnStatusChanged?.Invoke(currentStatus), null);
         }
 
         // ---------------------------------------------------------------------
@@ -248,7 +306,7 @@ namespace Server
             var healthy = await RunHealthcheckAsync();
             if (!healthy)
             {
-                Status = NetworkConnectionStatus.Error;
+                Status = NetworkConnectionStatus.Disconnected;
                 errorCodes = new[] { "healthcheck_failed" };
                 Debug.LogError("Nakama: healthcheck RPC failed.");
                 return;
@@ -260,9 +318,31 @@ namespace Server
                 bool useMainThread = settings.UseMainThreadSocket;
                 Socket = Client.NewSocket(useMainThread: useMainThread);
                 // wire socket lifecycle
-                Socket.Connected += () => Status = NetworkConnectionStatus.Connected;
-                Socket.Closed += _ => Status = NetworkConnectionStatus.Disconnected;
-                Socket.ReceivedError += ex => Status = NetworkConnectionStatus.Error;
+                socketConnectedHandler = () =>
+                {
+                    Debug.Log("Nakama: socket connected event");
+                    Status = NetworkConnectionStatus.Connected;
+                    StopReconnectLoop();
+                    StartHeartbeat();
+                };
+                socketClosedHandler = reason =>
+                {
+                    Debug.Log($"Nakama: socket closed event ({reason})");
+                    Status = NetworkConnectionStatus.Disconnected;
+                    StopHeartbeat();
+                    TriggerReconnect("socket closed");
+                };
+                socketErrorHandler = ex =>
+                {
+                    Debug.LogError($"Nakama: socket error event {ex}");
+                    Status = NetworkConnectionStatus.Error;
+                    StopHeartbeat();
+                    TriggerReconnect("socket error");
+                };
+
+                Socket.Connected += socketConnectedHandler;
+                Socket.Closed += socketClosedHandler;
+                Socket.ReceivedError += socketErrorHandler;
 
                 bool appearOnline = true;
                 int connectTimeout =
@@ -274,6 +354,8 @@ namespace Server
 
                 Status = NetworkConnectionStatus.Connected;
                 errorCodes = null;
+                StartHeartbeat();
+                StopReconnectLoop();
 
                 Debug.Log("Nakama: Connected successfully (auth + healthcheck + socket OK).");
             }
@@ -284,12 +366,16 @@ namespace Server
                 );
                 Status = NetworkConnectionStatus.Error;
                 errorCodes = new[] { $"socket_api_{apiEx.StatusCode}" };
+                StopHeartbeat();
+                TriggerReconnect("socket api error");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Nakama: unexpected error while connecting socket: {ex}");
                 Status = NetworkConnectionStatus.Error;
                 errorCodes = new[] { "socket_exception" };
+                StopHeartbeat();
+                TriggerReconnect("socket exception");
             }
         }
 
@@ -361,6 +447,124 @@ namespace Server
                         + $"  text: {req.downloadHandler.text}"
                 );
             }
+        }
+
+        private void StartHeartbeat()
+        {
+            StopHeartbeat();
+            heartbeatCts = new CancellationTokenSource();
+            var token = heartbeatCts.Token;
+            _ = HeartbeatLoopAsync(token);
+        }
+
+        private void StopHeartbeat()
+        {
+            if (heartbeatCts == null)
+            {
+                return;
+            }
+
+            heartbeatCts.Cancel();
+            heartbeatCts.Dispose();
+            heartbeatCts = null;
+        }
+
+        private async Task HeartbeatLoopAsync(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(500, token);
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
+
+                if (Client == null || Session == null)
+                {
+                    Status = NetworkConnectionStatus.Disconnected;
+                    continue;
+                }
+
+                bool healthy = await RunHealthcheckAsync();
+                Status = healthy
+                    ? NetworkConnectionStatus.Connected
+                    : NetworkConnectionStatus.Error;
+                if (!healthy)
+                {
+                    StopHeartbeat();
+                    TriggerReconnect("heartbeat failed");
+                }
+            }
+        }
+
+        private void TriggerReconnect(string reason)
+        {
+            if (reconnectCts != null || Status == NetworkConnectionStatus.Connecting)
+            {
+                return;
+            }
+
+            Debug.Log($"Nakama: starting reconnect loop ({reason})");
+            reconnectCts = new CancellationTokenSource();
+            var token = reconnectCts.Token;
+            _ = ReconnectLoopAsync(token);
+        }
+
+        private async Task ReconnectLoopAsync(CancellationToken token)
+        {
+            for (int i = 0; i < reconnectDelaysMs.Length && !token.IsCancellationRequested; i++)
+            {
+                try
+                {
+                    await Task.Delay(reconnectDelaysMs[i], token);
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
+
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                if (Status == NetworkConnectionStatus.Connected)
+                {
+                    StopReconnectLoop();
+                    return;
+                }
+
+                try
+                {
+                    await CloseConnectionAsync();
+                    await TryToConnectAsync();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"Nakama: reconnect attempt failed: {ex}");
+                }
+
+                if (Status == NetworkConnectionStatus.Connected)
+                {
+                    StopReconnectLoop();
+                    return;
+                }
+            }
+        }
+
+        private void StopReconnectLoop()
+        {
+            if (reconnectCts == null)
+            {
+                return;
+            }
+
+            reconnectCts.Cancel();
+            reconnectCts.Dispose();
+            reconnectCts = null;
         }
     }
 }

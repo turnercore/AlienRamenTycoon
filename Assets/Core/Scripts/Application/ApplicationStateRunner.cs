@@ -39,7 +39,7 @@ namespace Core
 
         public void FixedUpdate()
         {
-            if (!currentState.IsApplicationStateInitialized)
+            if (currentState == null || !currentState.IsApplicationStateInitialized)
             {
                 return;
             }
@@ -81,7 +81,7 @@ namespace Core
 
         public void LateUpdate()
         {
-            if (!currentState.IsApplicationStateInitialized)
+            if (currentState == null || !currentState.IsApplicationStateInitialized)
             {
                 return;
             }

@@ -8,14 +8,13 @@ using UnityEngine;
 
 namespace Server
 {
-    public class NakamaNetworkService : INetworkService
+    public class NakamaNetworkService : INetworkService, IDisposable
     {
         public INetworkConnection Connection => _connection;
         public NetworkConnectionStatus Status => _connection.Status;
 
         private readonly NakamaConnection _connection;
         private Action<NetworkConnectionStatus> onNetworkStatusChanged;
-        private float pollSocketInterval = 0.1f;
 
         public NakamaNetworkService(NakamaConnection connection)
         {
