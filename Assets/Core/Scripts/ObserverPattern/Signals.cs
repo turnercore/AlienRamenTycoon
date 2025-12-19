@@ -168,13 +168,14 @@ public class Signals
     /// what you are doing)
     /// </summary>
     /// <param name="signalHash">Unique hash for signal</param>
+    /// <param name="owner">Owner responsible for cleanup</param>
     /// <param name="handler">Callback for signal listener</param>
-    public static void AddListenerToHash(string signalHash, Action handler)
+    public static void AddListenerToHash(string signalHash, ISignalListener owner, Action handler)
     {
         ISignal signal = GetSignalByHash(signalHash);
         if (signal != null && signal is ASignal)
         {
-            (signal as ASignal).AddListener(handler);
+            (signal as ASignal).AddListener(owner, handler);
         }
     }
 
